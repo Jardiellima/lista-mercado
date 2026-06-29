@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minha Lista de Mercado</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            background-color: #f4f6f9;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+        .container {
+            background: white;
+            width: 100%;
+            max-width: 500px;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        h2 {
+            margin-top: 0;
+            color: #333;
+            text-align: center;
+        }
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        input[type="text"] {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            outline: none;
+        }
+        input[type="text"]:focus {
+            border-color: #007bff;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        li {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px;
+            background: #f8f9fa;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            border-left: 5px solid #007bff;
+            transition: all 0.2s;
+        }
+        .item-text {
+            flex: 1;
+            margin-left: 10px;
+            font-size: 16px;
+            color: #333;
+            cursor: pointer;
+        }
+        .completed {
+            border-left-color: #28a745;
+            background: #e2f0d9;
+            opacity: 0.7;
+        }
+        .completed .item-text {
+            text-decoration: line-through;
+            color: #6c757d;
+        }
+        .delete-btn {
+            background: none;
+            color: #dc3545;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .delete-btn:hover {
+            color: #bd2130;
+            background: none;
+        }
+        input[type="checkbox"] {
+            transform: scale(1.2);
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>🛒 Lista de Mercado</h2>
+    
+    <div class="input-group">
+        <input type="text" id="itemInput" placeholder="Adicionar item...">
+        <button onclick="addItem()">+</button>
+    </div>
+
+    <ul id="itemList"></ul>
+</div>
+
+<script>
+    const itemInput = document.getElementById('itemInput');
+    const itemList = document.getElementById('itemList');
+
+    // Carrega a lista salva ao abrir a página
+    let shoppingList = JSON.parse(localStorage.getItem('marketList')) || [];
+
+    function renderList() {
+        itemList.innerHTML = '';
+        shoppingList.forEach((item, index) => {
+            const li = document.createElement('li');
+            if (item.checked) li.classList.add('completed');
+
+            li.innerHTML = `
+                <input type="checkbox" ${item.checked ? 'checked' : ''} onchange="toggleItem(${index})">
+                <span class="item-text" onclick="toggleItem(${index})">${item.text}</span>
+                <button class="delete-btn" onclick="deleteItem(${index})">Excluir</button>
+            `;
+            itemList.appendChild(li);
+        });
+        localStorage.setItem('marketList', JSON.stringify(shoppingList));
+    }
+
+    function addItem() {
+        const text = itemInput.value.trim();
+        if (text !== '') {
+            shoppingList.push({ text: text, checked: false });
+            itemInput.value = '';
+            renderList();
+        }
+    }
+
+    function toggleItem(index) {
+        shoppingList[index].checked = !shoppingList[index].checked;
+        renderList();
+    }
+
+    function deleteItem(index) {
+        shoppingList.splice(index, 1);
+        renderList();
+    }
+
+    // Permite adicionar apertando Enter
+    itemInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') addItem();
+    });
+
+    // Renderiza a lista inicial
+    renderList();
+</script>
+
+</body>
+</html>
