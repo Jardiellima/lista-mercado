@@ -13,7 +13,7 @@
             background-color: #f9f9f9;
         }
         h2 { color: #333; text-align: center; }
-        .input-container { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+        .input-container { display: flex; gap: 10px; margin-bottom: 20px; flex-direction: column; }
         textarea { 
             width: 100%; 
             height: 80px;
@@ -45,6 +45,45 @@
             justify-content: space-between; 
             align-items: center;
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.2s ease;
+        }
+        .item-corpo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+        }
+        .checkbox {
+            width: 18px;
+            height: 18px;
+            border: 2px solid #007bff;
+            border-radius: 4px;
+            display: inline-block;
+            position: relative;
+        }
+        /* Estilo do item marcado/comprado */
+        li.comprado {
+            background-color: #e9ecef;
+            opacity: 0.6;
+        }
+        li.comprado span.texto-item {
+            text-decoration: line-through;
+            color: #6c757d;
+        }
+        li.comprado .checkbox {
+            background-color: #007bff;
+            border-color: #007bff;
+        }
+        li.comprado .checkbox::after {
+            content: '✓';
+            color: white;
+            position: absolute;
+            top: -2px;
+            left: 3px;
+            font-size: 14px;
+            font-weight: bold;
         }
         .delete-btn { 
             color: #dc3545; 
@@ -92,18 +131,18 @@
         const addBtn = document.getElementById('addBtn');
         const listaItens = document.getElementById('listaItens');
 
-        // Função para separar o texto por linhas e mandar pro banco de dados
+        // Adiciona itens com o status "comprado: false" por padrão
         function adicionarItens() {
             const textoCompleto = itemInput.value;
-            
-            // Divide o texto sempre que houver uma quebra de linha
             const linhas = textoCompleto.split('\n');
             
             linhas.forEach(linha => {
-                const textoLimpo = linha.trim();
-                // Só adiciona se a linha não estiver em branco
+                const textoLimpo = inline_formatting_bracket(linha.trim());
                 if (textoLimpo !== '') {
-                    itensRef.push({ texto: textoLimpo });
+                    itensRef.push({ 
+                        texto: textoLimpo,
+                        comprado: false 
+                    });
                 }
             });
 
@@ -111,25 +150,41 @@
             itemInput.focus();
         }
 
-        // Escuta o clique no botão
         addBtn.addEventListener('click', adicionarItens);
 
-        // Escuta o Firebase em tempo real (Qualquer mudança atualiza a tela de todos)
+        // Alterna o status do item entre comprado e não comprado
+        function alternarStatus(id, statusAtual) {
+            database.ref('itens/' + id).update({
+                comprado: !statusAtual
+            });
+        }
+
+        // Escuta o Firebase em tempo real
         itensRef.on('value', (snapshot) => {
             listaItens.innerHTML = '';
             const dados = snapshot.val();
             
             for (let id in dados) {
+                const item = dados[id];
                 const li = document.createElement('li');
+                
+                // Adiciona a classe visual se o item já estiver comprado
+                if (item.comprado) {
+                    li.classList.add('comprado');
+                }
+                
                 li.innerHTML = `
-                    <span>${dados[id].texto}</span>
-                    <span class="delete-btn" onclick="removerItem('${id}')">Excluir</span>
+                    <div class="item-corpo" onclick="alternarStatus('${id}', ${item.comprado})">
+                        <div class="checkbox"></div>
+                        <span class="texto-item">${item.texto}</span>
+                    </div>
+                    <span class="delete-btn" onclick="event.stopPropagation(); removerItem('${id}')">Excluir</span>
                 `;
                 listaItens.appendChild(li);
             }
         });
 
-        // Função para apagar o item do banco de dados
+        // Remove do banco de dados
         function removerItem(id) {
             database.ref('itens/' + id).remove();
         }
