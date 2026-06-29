@@ -13,13 +13,16 @@
             background-color: #f9f9f9;
         }
         h2 { color: #333; text-align: center; }
-        .input-container { display: flex; gap: 10px; margin-bottom: 20px; }
-        input { 
-            flex: 1; 
+        .input-container { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+        textarea { 
+            width: 100%; 
+            height: 80px;
             padding: 12px; 
             border: 1px solid #ccc; 
             border-radius: 6px; 
             font-size: 16px; 
+            resize: vertical;
+            box-sizing: border-box;
         }
         button { 
             padding: 12px 20px; 
@@ -58,12 +61,13 @@
     <h2>📝 Lista Compartilhada em Tempo Real</h2>
     
     <div class="input-container">
-        <input type="text" id="itemInput" placeholder="Adicione um item à lista...">
-        <button id="addBtn">Adicionar</button>
+        <textarea id="itemInput" placeholder="Digite ou cole seus itens aqui&#10;(um por linha para adicionar vários)..."></textarea>
+        <button id="addBtn">Adicionar Itens</button>
     </div>
 
     <ul id="listaItens"></ul>
 
+    <!-- Scripts do Firebase (SDK de Compatibilidade) -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 
@@ -88,21 +92,27 @@
         const addBtn = document.getElementById('addBtn');
         const listaItens = document.getElementById('listaItens');
 
-        // Função para mandar o item pro banco de dados
-        function adicionarItem() {
-            const texto = itemInput.value.trim();
-            if (texto !== '') {
-                itensRef.push({ texto: texto });
-                itemInput.value = '';
-                itemInput.focus();
-            }
+        // Função para separar o texto por linhas e mandar pro banco de dados
+        function adicionarItens() {
+            const textoCompleto = itemInput.value;
+            
+            // Divide o texto sempre que houver uma quebra de linha
+            const linhas = textoCompleto.split('\n');
+            
+            linhas.forEach(linha => {
+                const textoLimpo = linha.trim();
+                // Só adiciona se a linha não estiver em branco
+                if (textoLimpo !== '') {
+                    itensRef.push({ texto: textoLimpo });
+                }
+            });
+
+            itemInput.value = '';
+            itemInput.focus();
         }
 
-        // Escuta o clique no botão e a tecla Enter
-        addBtn.addEventListener('click', adicionarItem);
-        itemInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') adicionarItem();
-        });
+        // Escuta o clique no botão
+        addBtn.addEventListener('click', adicionarItens);
 
         // Escuta o Firebase em tempo real (Qualquer mudança atualiza a tela de todos)
         itensRef.on('value', (snapshot) => {
