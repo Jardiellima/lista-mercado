@@ -40,7 +40,6 @@
         #scanBtn { background-color: #28a745; }
         #scanBtn:hover { background-color: #218838; }
         
-        /* Container da Câmera */
         #scanner-container {
             display: none;
             margin-bottom: 20px;
@@ -61,25 +60,30 @@
             justify-content: space-between; 
             align-items: center;
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            cursor: pointer;
             user-select: none;
         }
-        .item-corpo { display: flex; align-items: center; gap: 12px; flex: 1; }
-        .checkbox { width: 18px; height: 18px; border: 2px solid #007bff; border-radius: 4px; position: relative; }
+        .item-corpo { display: flex; align-items: center; gap: 12px; flex: 1; cursor: pointer; }
+        .checkbox { width: 18px; height: 18px; border: 2px solid #007bff; border-radius: 4px; position: relative; flex-shrink: 0; }
         
+        .texto-item { flex: 1; font-size: 16px; padding: 2px 0; }
+        .edit-input { flex: 1; font-size: 16px; padding: 4px; border: 1px solid #007bff; border-radius: 4px; }
+
         li.comprado { background-color: #e9ecef; opacity: 0.6; }
         li.comprado span.texto-item { text-decoration: line-through; color: #6c757d; }
         li.comprado .checkbox { background-color: #007bff; border-color: #007bff; }
         li.comprado .checkbox::after {
             content: '✓'; color: white; position: absolute; top: -2px; left: 3px; font-size: 14px; font-weight: bold;
         }
-        .delete-btn { color: #dc3545; cursor: pointer; font-weight: bold; padding: 5px 10px; border-radius: 4px; }
+        .delete-btn { color: #dc3545; cursor: pointer; font-weight: bold; padding: 5px 10px; border-radius: 4px; margin-left: 10px; }
         .delete-btn:hover { background-color: #f8d7da; }
+        
+        .dica-edicao { text-align: center; font-size: 12px; color: #888; margin-top: -10px; margin-bottom: 15px; }
     </style>
 </head>
 <body>
 
     <h2>📝 Lista Compartilhada em Tempo Real</h2>
+    <p class="dica-edicao">💡 Toque duas vezes (double click) no texto de um item para editá-lo</p>
     
     <div class="input-container">
         <textarea id="itemInput" placeholder="Digite seus itens aqui (um por linha)..."></textarea>
@@ -124,7 +128,6 @@
         
         let html5QrcodeScanner;
 
-        // Adicionar itens por texto normal
         function adicionarItens() {
             const textoCompleto = itemInput.value;
             const linhas = textoCompleto.split('\n');
@@ -138,17 +141,20 @@
         }
         addBtn.addEventListener('click', adicionarItens);
 
-        // Alternar Status de Comprado
         function alternarStatus(id, statusAtual) {
             database.ref('itens/' + id).update({ comprado: !statusAtual });
         }
 
-        // Deletar item
         function removerItem(id) {
             database.ref('itens/' + id).remove();
         }
 
-        // Escuta o Firebase para desenhar a lista
+        function salvarEdicao(id, novoTexto) {
+            if (novoTexto.trim() !== '') {
+                database.ref('itens/' + id).update({ texto: novoTexto.trim() });
+            }
+        }
+
         itensRef.on('value', (snapshot) => {
             listaItens.innerHTML = '';
             const dados = snapshot.val();
@@ -156,70 +162,99 @@
                 const item = dados[id];
                 const li = document.createElement('li');
                 if (item.comprado) li.classList.add('comprado');
+                
                 li.innerHTML = `
-                    <div class="item-corpo" onclick="alternarStatus('${id}', ${item.comprado})">
-                        <div class="checkbox"></div>
-                        <span class="texto-item">${item.texto}</span>
+                    <div class="item-corpo">
+                        <div class="checkbox" onclick="alternarStatus('${id}', ${item.comprado})"></div>
+                        <span class="texto-item" id="text-${id}">${item.texto}</span>
                     </div>
-                    <span class="delete-btn" onclick="event.stopPropagation(); removerItem('${id}')">Excluir</span>
+                    <span class="delete-btn" onclick="removerItem('${id}')">Excluir</span>
                 `;
+
+                // Configura o evento de toque duplo (DblClick) para habilitar edição
+                const campoTexto = li.querySelector(`#text-${id}`);
+                campoTexto.addEventListener('dblclick', (e) => {
+                    e.stopPropagation();
+                    habilitarModoEdicao(id, item.texto, campoTexto.parentElement);
+                });
+
                 listaItens.appendChild(li);
             }
         });
 
-        // --- LÓGICA DO ESCANER DE CÓDIGO DE BARRAS ---
-        
+        // Transforma o texto em um input editável temporário
+        function habilitarModoEdicao(id, textoAtual, container) {
+            const spanAntigo = container.querySelector('.texto-item');
+            if (!spanAntigo) return; // Evita bugar se já estiver editando
+
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'edit-input';
+            input.value = textoAtual;
+            
+            container.replaceChild(input, spanAntigo);
+            input.focus();
+
+            // Salva ao dar Enter ou sair do campo (blur)
+            input.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    salvarEdicao(id, input.value);
+                }
+            });
+            input.addEventListener('blur', () => {
+                salvarEdicao(id, input.value);
+            });
+        }
+
+        // --- ESCANER DE CÓDIGO DE BARRAS ATUALIZADO ---
         scanBtn.addEventListener('click', () => {
             scannerContainer.style.display = 'block';
-            
             html5QrcodeScanner = new Html5Qrcode("reader");
-            
-            // Configurações do scanner de câmera traseira com foco em códigos de barras de mercado (EAN_13)
             const config = { 
                 fps: 10, 
-                qrbox: { width: 280, height: 150 }, // Formato retangular ideal para códigos de barra
+                qrbox: { width: 280, height: 150 },
                 formatsToSupport: [ Html5QrcodeSupportedFormats.EAN_13, Html5QrcodeSupportedFormats.EAN_8 ]
             };
 
             html5QrcodeScanner.start(
-                { facingMode: "environment" }, // Força o uso da câmera de trás do celular
+                { facingMode: "environment" },
                 config,
                 onScanSuccess
             ).catch(err => {
-                alert("Erro ao acessar a câmera: " + err);
+                alert("Erro na câmera: " + err);
                 scannerContainer.style.display = 'none';
             });
         });
 
-        // O que fazer quando a câmera conseguir ler o código com sucesso
         async function onScanSuccess(decodedText) {
-            // Vibra o celular por 100ms caso o dispositivo suporte
             if (navigator.vibrate) navigator.vibrate(100);
-            
-            // Para o scanner para não duplicar leituras
             fecharScanner();
 
-            // Exibe mensagem temporária na lista de que está buscando o produto
-            let tempRef = itensRef.push({ texto: "Buscando produto (" + decodedText + ")...", comprado: false });
-
             try {
-                // Consulta uma API aberta internacional/nacional de produtos (Open Food Facts)
                 let response = await fetch(`https://world.openfoodfacts.org/api/v2/product/${decodedText}.json`);
                 let data = await response.json();
                 
                 if (data.status === 1 && data.product.product_name) {
                     let nomeProduto = data.product.product_name;
                     let marca = data.product.brands ? ` (${data.product.brands})` : '';
-                    // Atualiza o item temporário com o nome real do produto
-                    database.ref('itens/' + tempRef.key).set({ texto: nomeProduto + marca, comprado: false });
+                    itensRef.push({ texto: nomeProduto + marca, comprado: false });
                 } else {
-                    // Se não achar na API, mantém o código numérico
-                    database.ref('itens/' + tempRef.key).set({ texto: "Código: " + decodedText, comprado: false });
+                    // Se a API não souber o nome, pergunta direto pro usuário antes de salvar!
+                    solicitarNomeProduto(decodedText);
                 }
             } catch (error) {
-                // Se der erro na rede/API, grava o código
-                database.ref('itens/' + tempRef.key).set({ texto: "Código: " + decodedText, comprado: false });
+                solicitarNomeProduto(decodedText);
             }
+        }
+
+        function solicitarNomeProduto(codigo) {
+            // Abre uma janelinha nativa do celular para você digitar o nome do produto na hora
+            setTimeout(() => {
+                let nomeDigitado = prompt(`Código de barras desconhecido (${codigo}).\nQual produto você deseja adicionar?`);
+                if (nomeDigitado && nomeDigitado.trim() !== "") {
+                    itensRef.push({ texto: nomeDigitado.trim(), comprado: false });
+                }
+            }, 500);
         }
 
         function fecharScanner() {
@@ -231,7 +266,6 @@
                 });
             }
         }
-
         stopScanBtn.addEventListener('click', fecharScanner);
     </script>
 </body>
