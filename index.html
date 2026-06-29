@@ -8,7 +8,7 @@
         body { 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
             max-width: 500px; 
-            margin: 40px auto; 
+            margin: 20px auto; 
             padding: 20px; 
             background-color: #f9f9f9;
         }
@@ -24,17 +24,33 @@
             resize: vertical;
             box-sizing: border-box;
         }
+        .btn-group { display: flex; gap: 10px; }
         button { 
-            padding: 12px 20px; 
-            background-color: #007bff; 
+            flex: 1;
+            padding: 12px 10px; 
             color: white; 
             border: none; 
             border-radius: 6px; 
             cursor: pointer; 
-            font-size: 16px; 
+            font-size: 15px; 
             font-weight: bold;
         }
-        button:hover { background-color: #0056b3; }
+        #addBtn { background-color: #007bff; }
+        #addBtn:hover { background-color: #0056b3; }
+        #scanBtn { background-color: #28a745; }
+        #scanBtn:hover { background-color: #218838; }
+        
+        /* Container da Câmera */
+        #scanner-container {
+            display: none;
+            margin-bottom: 20px;
+            background: #fff;
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        #reader { width: 100%; }
+
         ul { list-style-type: none; padding: 0; }
         li { 
             padding: 12px 15px; 
@@ -47,51 +63,17 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
             cursor: pointer;
             user-select: none;
-            transition: all 0.2s ease;
         }
-        .item-corpo {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            flex: 1;
-        }
-        .checkbox {
-            width: 18px;
-            height: 18px;
-            border: 2px solid #007bff;
-            border-radius: 4px;
-            display: inline-block;
-            position: relative;
-        }
-        /* Estilo do item marcado/comprado */
-        li.comprado {
-            background-color: #e9ecef;
-            opacity: 0.6;
-        }
-        li.comprado span.texto-item {
-            text-decoration: line-through;
-            color: #6c757d;
-        }
-        li.comprado .checkbox {
-            background-color: #007bff;
-            border-color: #007bff;
-        }
+        .item-corpo { display: flex; align-items: center; gap: 12px; flex: 1; }
+        .checkbox { width: 18px; height: 18px; border: 2px solid #007bff; border-radius: 4px; position: relative; }
+        
+        li.comprado { background-color: #e9ecef; opacity: 0.6; }
+        li.comprado span.texto-item { text-decoration: line-through; color: #6c757d; }
+        li.comprado .checkbox { background-color: #007bff; border-color: #007bff; }
         li.comprado .checkbox::after {
-            content: '✓';
-            color: white;
-            position: absolute;
-            top: -2px;
-            left: 3px;
-            font-size: 14px;
-            font-weight: bold;
+            content: '✓'; color: white; position: absolute; top: -2px; left: 3px; font-size: 14px; font-weight: bold;
         }
-        .delete-btn { 
-            color: #dc3545; 
-            cursor: pointer; 
-            font-weight: bold; 
-            padding: 5px 10px;
-            border-radius: 4px;
-        }
+        .delete-btn { color: #dc3545; cursor: pointer; font-weight: bold; padding: 5px 10px; border-radius: 4px; }
         .delete-btn:hover { background-color: #f8d7da; }
     </style>
 </head>
@@ -100,18 +82,25 @@
     <h2>📝 Lista Compartilhada em Tempo Real</h2>
     
     <div class="input-container">
-        <textarea id="itemInput" placeholder="Digite ou cole seus itens aqui&#10;(um por linha para adicionar vários)..."></textarea>
-        <button id="addBtn">Adicionar Itens</button>
+        <textarea id="itemInput" placeholder="Digite seus itens aqui (um por linha)..."></textarea>
+        <div class="btn-group">
+            <button id="addBtn">Adicionar Texto</button>
+            <button id="scanBtn">📷 Escanear Código</button>
+        </div>
+    </div>
+
+    <div id="scanner-container">
+        <div id="reader"></div>
+        <button id="stopScanBtn" style="background-color: #dc3545; margin-top: 10px; width: 100%;">Fechar Câmera</button>
     </div>
 
     <ul id="listaItens"></ul>
 
-    <!-- Scripts do Firebase (SDK de Compatibilidade) -->
+    <script src="https://unpkg.com/html5-qrcode"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 
     <script>
-        // Suas credenciais do Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyCy7my7mba4Ii47drcrHjEXmcByRRZsN90",
             authDomain: "lista-colaborativa-7790b.firebaseapp.com",
@@ -122,57 +111,51 @@
             appId: "1:830696828500:web:2971388ec7ed99c10f87c1"
         };
 
-        // Inicializando o Firebase
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
         const itensRef = database.ref('itens');
 
         const itemInput = document.getElementById('itemInput');
         const addBtn = document.getElementById('addBtn');
+        const scanBtn = document.getElementById('scanBtn');
+        const stopScanBtn = document.getElementById('stopScanBtn');
+        const scannerContainer = document.getElementById('scanner-container');
         const listaItens = document.getElementById('listaItens');
+        
+        let html5QrcodeScanner;
 
-        // Adiciona itens com o status "comprado: false" por padrão
+        // Adicionar itens por texto normal
         function adicionarItens() {
             const textoCompleto = itemInput.value;
             const linhas = textoCompleto.split('\n');
-            
             linhas.forEach(linha => {
-                const textoLimpo = inline_formatting_bracket(linha.trim());
+                const textoLimpo = linha.trim();
                 if (textoLimpo !== '') {
-                    itensRef.push({ 
-                        texto: textoLimpo,
-                        comprado: false 
-                    });
+                    itensRef.push({ texto: textoLimpo, comprado: false });
                 }
             });
-
             itemInput.value = '';
-            itemInput.focus();
         }
-
         addBtn.addEventListener('click', adicionarItens);
 
-        // Alterna o status do item entre comprado e não comprado
+        // Alternar Status de Comprado
         function alternarStatus(id, statusAtual) {
-            database.ref('itens/' + id).update({
-                comprado: !statusAtual
-            });
+            database.ref('itens/' + id).update({ comprado: !statusAtual });
         }
 
-        // Escuta o Firebase em tempo real
+        // Deletar item
+        function removerItem(id) {
+            database.ref('itens/' + id).remove();
+        }
+
+        // Escuta o Firebase para desenhar a lista
         itensRef.on('value', (snapshot) => {
             listaItens.innerHTML = '';
             const dados = snapshot.val();
-            
             for (let id in dados) {
                 const item = dados[id];
                 const li = document.createElement('li');
-                
-                // Adiciona a classe visual se o item já estiver comprado
-                if (item.comprado) {
-                    li.classList.add('comprado');
-                }
-                
+                if (item.comprado) li.classList.add('comprado');
                 li.innerHTML = `
                     <div class="item-corpo" onclick="alternarStatus('${id}', ${item.comprado})">
                         <div class="checkbox"></div>
@@ -184,10 +167,72 @@
             }
         });
 
-        // Remove do banco de dados
-        function removerItem(id) {
-            database.ref('itens/' + id).remove();
+        // --- LÓGICA DO ESCANER DE CÓDIGO DE BARRAS ---
+        
+        scanBtn.addEventListener('click', () => {
+            scannerContainer.style.display = 'block';
+            
+            html5QrcodeScanner = new Html5Qrcode("reader");
+            
+            // Configurações do scanner de câmera traseira com foco em códigos de barras de mercado (EAN_13)
+            const config = { 
+                fps: 10, 
+                qrbox: { width: 280, height: 150 }, // Formato retangular ideal para códigos de barra
+                formatsToSupport: [ Html5QrcodeSupportedFormats.EAN_13, Html5QrcodeSupportedFormats.EAN_8 ]
+            };
+
+            html5QrcodeScanner.start(
+                { facingMode: "environment" }, // Força o uso da câmera de trás do celular
+                config,
+                onScanSuccess
+            ).catch(err => {
+                alert("Erro ao acessar a câmera: " + err);
+                scannerContainer.style.display = 'none';
+            });
+        });
+
+        // O que fazer quando a câmera conseguir ler o código com sucesso
+        async function onScanSuccess(decodedText) {
+            // Vibra o celular por 100ms caso o dispositivo suporte
+            if (navigator.vibrate) navigator.vibrate(100);
+            
+            // Para o scanner para não duplicar leituras
+            fecharScanner();
+
+            // Exibe mensagem temporária na lista de que está buscando o produto
+            let tempRef = itensRef.push({ texto: "Buscando produto (" + decodedText + ")...", comprado: false });
+
+            try {
+                // Consulta uma API aberta internacional/nacional de produtos (Open Food Facts)
+                let response = await fetch(`https://world.openfoodfacts.org/api/v2/product/${decodedText}.json`);
+                let data = await response.json();
+                
+                if (data.status === 1 && data.product.product_name) {
+                    let nomeProduto = data.product.product_name;
+                    let marca = data.product.brands ? ` (${data.product.brands})` : '';
+                    // Atualiza o item temporário com o nome real do produto
+                    database.ref('itens/' + tempRef.key).set({ texto: nomeProduto + marca, comprado: false });
+                } else {
+                    // Se não achar na API, mantém o código numérico
+                    database.ref('itens/' + tempRef.key).set({ texto: "Código: " + decodedText, comprado: false });
+                }
+            } catch (error) {
+                // Se der erro na rede/API, grava o código
+                database.ref('itens/' + tempRef.key).set({ texto: "Código: " + decodedText, comprado: false });
+            }
         }
+
+        function fecharScanner() {
+            if (html5QrcodeScanner) {
+                html5QrcodeScanner.stop().then(() => {
+                    scannerContainer.style.display = 'none';
+                }).catch(err => {
+                    scannerContainer.style.display = 'none';
+                });
+            }
+        }
+
+        stopScanBtn.addEventListener('click', fecharScanner);
     </script>
 </body>
 </html>
