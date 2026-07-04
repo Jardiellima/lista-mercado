@@ -90,17 +90,16 @@ const ref = firebase.database().ref("itens");
 
 // ---------------- ADICIONAR VÁRIOS ----------------
 function adicionar() {
-  const texto = document.getElementById("itemInput").value;
+  const texto = document.getElementById("itemInput").value.trim();
 
-  const qtdPadrao = parseFloat(document.getElementById("qtdInput").value || 1);
-  const valorPadrao = parseFloat(document.getElementById("valorInput").value || 0);
+  const qtdPadrao = parseFloat(document.getElementById("qtdInput").value) || 1;
+  const valorPadrao = parseFloat(document.getElementById("valorInput").value) || 0;
 
-  if (!texto.trim()) return;
+  if (!texto) return;
 
   texto.split("\n").forEach(linha => {
     const item = linha.trim();
-
-    if (item !== "") {
+    if (item) {
       ref.push({
         texto: item,
         quantidade: qtdPadrao,
@@ -113,29 +112,28 @@ function adicionar() {
   document.getElementById("itemInput").value = "";
 }
 
-// ---------------- STATUS ----------------
+// ---------------- TOGGLE COMPRA ----------------
 function alternar(id, atual) {
   ref.child(id).update({ comprado: !atual });
 }
 
-// ---------------- EXCLUIR ----------------
+// ---------------- REMOVER ----------------
 function remover(id) {
   ref.child(id).remove();
 }
 
-// ---------------- RENDER LISTA ----------------
+// ---------------- RENDER ----------------
 ref.on("value", snap => {
-  const data = snap.val();
+  const data = snap.val() || {};
   const lista = document.getElementById("lista");
   lista.innerHTML = "";
 
   let total = 0;
 
-  for (let id in data) {
-    const item = data[id];
+  Object.entries(data).forEach(([id, item]) => {
 
-    const qtd = item.quantidade || 1;
-    const valor = item.valor || 0;
+    const qtd = parseFloat(item.quantidade) || 1;
+    const valor = parseFloat(item.valor) || 0;
     const subtotal = qtd * valor;
 
     total += subtotal;
@@ -160,20 +158,22 @@ ref.on("value", snap => {
     `;
 
     lista.appendChild(div);
-  }
+  });
 
   document.getElementById("total").innerText =
     "Total: R$ " + total.toFixed(2);
 
-  // ---------------- EDITAR QUANTIDADE ----------------
+  // ---------------- EDITAR QTD ----------------
   document.querySelectorAll(".qtd").forEach(el => {
     el.onclick = () => {
-      const id = el.getAttribute("data-id");
+      const id = el.dataset.id;
       const atual = el.innerText;
 
       const novo = prompt("Nova quantidade:", atual);
-      if (novo !== null && novo !== "") {
-        ref.child(id).update({ quantidade: parseFloat(novo) });
+      const num = parseFloat(novo);
+
+      if (!isNaN(num) && num >= 0) {
+        ref.child(id).update({ quantidade: num });
       }
     };
   });
@@ -181,12 +181,14 @@ ref.on("value", snap => {
   // ---------------- EDITAR VALOR ----------------
   document.querySelectorAll(".valor").forEach(el => {
     el.onclick = () => {
-      const id = el.getAttribute("data-id");
+      const id = el.dataset.id;
       const atual = el.innerText;
 
       const novo = prompt("Novo valor:", atual);
-      if (novo !== null && novo !== "") {
-        ref.child(id).update({ valor: parseFloat(novo) });
+      const num = parseFloat(novo);
+
+      if (!isNaN(num) && num >= 0) {
+        ref.child(id).update({ valor: num });
       }
     };
   });
