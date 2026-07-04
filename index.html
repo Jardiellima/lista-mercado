@@ -88,7 +88,7 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const ref = firebase.database().ref("itens");
 
-// ---------------- ADICIONAR VÁRIOS ----------------
+// ---------------- ADICIONAR ITENS ----------------
 function adicionar() {
   const texto = document.getElementById("itemInput").value.trim();
 
@@ -112,7 +112,7 @@ function adicionar() {
   document.getElementById("itemInput").value = "";
 }
 
-// ---------------- TOGGLE COMPRA ----------------
+// ---------------- TOGGLE COMPRADO ----------------
 function alternar(id, atual) {
   ref.child(id).update({ comprado: !atual });
 }
@@ -122,7 +122,7 @@ function remover(id) {
   ref.child(id).remove();
 }
 
-// ---------------- RENDER ----------------
+// ---------------- RENDER LISTA ----------------
 ref.on("value", snap => {
   const data = snap.val() || {};
   const lista = document.getElementById("lista");
@@ -162,36 +162,36 @@ ref.on("value", snap => {
 
   document.getElementById("total").innerText =
     "Total: R$ " + total.toFixed(2);
+});
 
-  // ---------------- EDITAR QTD ----------------
-  document.querySelectorAll(".qtd").forEach(el => {
-    el.onclick = () => {
-      const id = el.dataset.id;
-      const atual = el.innerText;
+// ---------------- EVENT DELEGATION (EDITAR QTD E VALOR) ----------------
+document.getElementById("lista").addEventListener("click", (e) => {
 
-      const novo = prompt("Nova quantidade:", atual);
-      const num = parseFloat(novo);
+  // EDITAR QUANTIDADE
+  if (e.target.classList.contains("qtd")) {
+    const id = e.target.dataset.id;
+    const atual = e.target.innerText;
 
-      if (!isNaN(num) && num >= 0) {
-        ref.child(id).update({ quantidade: num });
-      }
-    };
-  });
+    const novo = prompt("Nova quantidade:", atual);
+    const num = parseFloat(novo);
 
-  // ---------------- EDITAR VALOR ----------------
-  document.querySelectorAll(".valor").forEach(el => {
-    el.onclick = () => {
-      const id = el.dataset.id;
-      const atual = el.innerText;
+    if (!isNaN(num) && num >= 0) {
+      ref.child(id).update({ quantidade: num });
+    }
+  }
 
-      const novo = prompt("Novo valor:", atual);
-      const num = parseFloat(novo);
+  // EDITAR VALOR
+  if (e.target.classList.contains("valor")) {
+    const id = e.target.dataset.id;
+    const atual = e.target.innerText;
 
-      if (!isNaN(num) && num >= 0) {
-        ref.child(id).update({ valor: num });
-      }
-    };
-  });
+    const novo = prompt("Novo valor:", atual);
+    const num = parseFloat(novo);
+
+    if (!isNaN(num) && num >= 0) {
+      ref.child(id).update({ valor: num });
+    }
+  }
 });
 </script>
 
