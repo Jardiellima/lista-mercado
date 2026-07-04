@@ -3,29 +3,22 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Lista com Total</title>
+<title>Lista Mercado + Edição + Total</title>
 
 <style>
-body { font-family: Arial; max-width: 600px; margin: auto; padding: 20px; background:#f5f5f5; }
+body {
+  font-family: 'Segoe UI', Tahoma;
+  max-width: 600px;
+  margin: auto;
+  padding: 20px;
+  background: #f5f5f5;
+}
 
 textarea, input {
   width: 100%;
   padding: 10px;
   margin: 5px 0;
-}
-
-.item-box {
-  background: #fff;
-  padding: 10px;
-  margin: 8px 0;
-  border-radius: 6px;
-}
-
-.total {
-  font-size: 18px;
-  font-weight: bold;
-  margin-top: 20px;
-  text-align: right;
+  box-sizing: border-box;
 }
 
 button {
@@ -34,19 +27,33 @@ button {
   margin-top: 5px;
   cursor: pointer;
 }
+
+.item-box {
+  background: white;
+  padding: 12px;
+  margin: 8px 0;
+  border-radius: 6px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.total {
+  font-size: 20px;
+  font-weight: bold;
+  text-align: right;
+  margin-top: 20px;
+}
 </style>
 </head>
 
 <body>
 
-<h2>🛒 Lista com Quantidade e Valor</h2>
+<h2>🛒 Lista Mercado Inteligente</h2>
 
 <textarea id="itemInput" placeholder="Nome do item"></textarea>
-
-<input id="qtdInput" type="number" placeholder="Quantidade" value="1">
+<input id="qtdInput" type="number" value="1" placeholder="Quantidade">
 <input id="valorInput" type="number" step="0.01" placeholder="Valor unitário">
 
-<button onclick="adicionar()">Adicionar</button>
+<button onclick="adicionar()">Adicionar Item</button>
 
 <h3>Lista</h3>
 <div id="lista"></div>
@@ -68,9 +75,9 @@ const firebaseConfig = {
 };
 
 firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
-const ref = db.ref("itens");
+const ref = firebase.database().ref("itens");
 
+// ------------------ ADICIONAR ------------------
 function adicionar() {
   const texto = document.getElementById("itemInput").value;
   const qtd = parseFloat(document.getElementById("qtdInput").value || 1);
@@ -90,14 +97,64 @@ function adicionar() {
   document.getElementById("valorInput").value = "";
 }
 
+// ------------------ ALTERA STATUS ------------------
 function alternar(id, atual) {
   ref.child(id).update({ comprado: !atual });
 }
 
+// ------------------ REMOVER ------------------
 function remover(id) {
   ref.child(id).remove();
 }
 
+// ------------------ EDITAR VALOR ------------------
+function editarValor(id, el, atual) {
+  const input = document.createElement("input");
+  input.type = "number";
+  input.step = "0.01";
+  input.value = atual || 0;
+  input.style.width = "80px";
+
+  el.replaceWith(input);
+  input.focus();
+
+  function salvar() {
+    ref.child(id).update({ valor: parseFloat(input.value || 0) });
+  }
+
+  input.addEventListener("blur", salvar);
+  input.addEventListener("keypress", e => {
+    if (e.key === "Enter") {
+      salvar();
+      input.blur();
+    }
+  });
+}
+
+// ------------------ EDITAR QUANTIDADE ------------------
+function editarQuantidade(id, el, atual) {
+  const input = document.createElement("input");
+  input.type = "number";
+  input.value = atual || 1;
+  input.style.width = "60px";
+
+  el.replaceWith(input);
+  input.focus();
+
+  function salvar() {
+    ref.child(id).update({ quantidade: parseFloat(input.value || 1) });
+  }
+
+  input.addEventListener("blur", salvar);
+  input.addEventListener("keypress", e => {
+    if (e.key === "Enter") {
+      salvar();
+      input.blur();
+    }
+  });
+}
+
+// ------------------ RENDER LISTA ------------------
 ref.on("value", snap => {
   const data = snap.val();
   const lista = document.getElementById("lista");
@@ -108,24 +165,44 @@ ref.on("value", snap => {
   for (let id in data) {
     const item = data[id];
 
-    const subtotal = (item.quantidade || 0) * (item.valor || 0);
+    const qtd = item.quantidade || 0;
+    const valor = item.valor || 0;
+    const subtotal = qtd * valor;
+
     total += subtotal;
 
     const div = document.createElement("div");
     div.className = "item-box";
 
     div.innerHTML = `
+      <div><strong>${item.texto}</strong></div>
+
       <div>
-        <strong>${item.texto}</strong>
+        Qtd: <span class="qtd">${qtd}</span> |
+        R$ <span class="valor">${valor.toFixed(2)}</span> |
+        Subtotal: R$ ${subtotal.toFixed(2)}
       </div>
-      <div>
-        Qtd: ${item.quantidade} | R$ ${item.valor.toFixed(2)} | Subtotal: R$ ${subtotal.toFixed(2)}
-      </div>
+
       <button onclick="alternar('${id}', ${item.comprado})">
         ${item.comprado ? "Desmarcar" : "Comprar"}
       </button>
+
       <button onclick="remover('${id}')">Excluir</button>
     `;
+
+    const qtdEl = div.querySelector(".qtd");
+    const valorEl = div.querySelector(".valor");
+
+    qtdEl.style.cursor = "pointer";
+    valorEl.style.cursor = "pointer";
+
+    qtdEl.addEventListener("click", () => {
+      editarQuantidade(id, qtdEl, item.quantidade);
+    });
+
+    valorEl.addEventListener("click", () => {
+      editarValor(id, valorEl, item.valor);
+    });
 
     lista.appendChild(div);
   }
