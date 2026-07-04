@@ -1,567 +1,139 @@
-
 <!DOCTYPE html>
-
 <html lang="pt-br">
-
 <head>
-
-    <meta charset="UTF-8">
-
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>Lista Colaborativa & Notas</title>
-
-    <style>
-
-        body { 
-
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-
-            max-width: 500px; 
-
-            margin: 20px auto; 
-
-            padding: 20px; 
-
-            background-color: #f9f9f9;
-
-        }
-
-        h2, h3 { color: #333; text-align: center; }
-
-        .input-container { display: flex; gap: 10px; margin-bottom: 20px; flex-direction: column; }
-
-        textarea { 
-
-            width: 100%; 
-
-            height: 80px;
-
-            padding: 12px; 
-
-            border: 1px solid #ccc; 
-
-            border-radius: 6px; 
-
-            font-size: 16px; 
-
-            resize: vertical;
-
-            box-sizing: border-box;
-
-        }
-
-        .btn-group { display: flex; gap: 10px; }
-
-        button { 
-
-            flex: 1;
-
-            padding: 12px 10px; 
-
-            color: white; 
-
-            border: none; 
-
-            border-radius: 6px; 
-
-            cursor: pointer; 
-
-            font-size: 15px; 
-
-            font-weight: bold;
-
-        }
-
-        #addBtn { background-color: #007bff; }
-
-        #addBtn:hover { background-color: #0056b3; }
-
-        #scanBtn { background-color: #28a745; }
-
-        #scanBtn:hover { background-color: #218838; }
-
-        
-
-        #scanner-container {
-
-            display: none;
-
-            margin-bottom: 20px;
-
-            background: #fff;
-
-            padding: 10px;
-
-            border-radius: 8px;
-
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-
-        }
-
-        #reader { width: 100%; }
-
-
-
-        ul { list-style-type: none; padding: 0; }
-
-        li { 
-
-            padding: 12px 15px; 
-
-            background: white; 
-
-            margin-bottom: 8px; 
-
-            border-radius: 6px; 
-
-            display: flex; 
-
-            justify-content: space-between; 
-
-            align-items: center;
-
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-
-        }
-
-        .item-corpo { display: flex; align-items: center; gap: 12px; flex: 1; cursor: pointer; }
-
-        .checkbox { width: 18px; height: 18px; border: 2px solid #007bff; border-radius: 4px; position: relative; flex-shrink: 0; }
-
-        
-
-        .texto-item { flex: 1; font-size: 16px; }
-
-        .edit-input { flex: 1; font-size: 16px; padding: 4px; border: 1px solid #007bff; border-radius: 4px; }
-
-
-
-        li.comprado { background-color: #e9ecef; opacity: 0.6; }
-
-        li.comprado span.texto-item { text-decoration: line-through; color: #6c757d; }
-
-        li.comprado .checkbox { background-color: #007bff; border-color: #007bff; }
-
-        li.comprado .checkbox::after { content: '✓'; color: white; position: absolute; top: -2px; left: 3px; font-size: 14px; font-weight: bold; }
-
-        
-
-        .delete-btn { color: #dc3545; cursor: pointer; font-weight: bold; padding: 5px 10px; border-radius: 4px; margin-left: 10px; }
-
-        
-
-        .btn-link { background-color: #17a2b8; font-size: 12px; padding: 6px 10px; text-decoration: none; color: white; border-radius: 4px; font-weight: bold; }
-
-        .btn-link:hover { background-color: #117a8b; }
-
-
-
-        .historico-section { margin-top: 30px; border-top: 2px dashed #ccc; padding-top: 20px; }
-
-        .dica-edicao { text-align: center; font-size: 12px; color: #888; margin-top: -10px; margin-bottom: 15px; }
-
-    </style>
-
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lista com Total</title>
+
+<style>
+body { font-family: Arial; max-width: 600px; margin: auto; padding: 20px; background:#f5f5f5; }
+
+textarea, input {
+  width: 100%;
+  padding: 10px;
+  margin: 5px 0;
+}
+
+.item-box {
+  background: #fff;
+  padding: 10px;
+  margin: 8px 0;
+  border-radius: 6px;
+}
+
+.total {
+  font-size: 18px;
+  font-weight: bold;
+  margin-top: 20px;
+  text-align: right;
+}
+
+button {
+  padding: 10px;
+  width: 100%;
+  margin-top: 5px;
+  cursor: pointer;
+}
+</style>
 </head>
 
 <body>
 
-
-
-    <h2>📝 Lista Mercado em Tempo Real</h2>
-
-    <p class="dica-edicao">💡 Toque 2x no texto para editar. Use a câmera para Produtos ou Cupom Fiscal.</p>
-
-    
-
-    <div class="input-container">
-
-        <textarea id="itemInput" placeholder="Digite seus itens aqui (um por linha)..."></textarea>
-
-        <div class="btn-group">
-
-            <button id="addBtn">Adicionar Texto</button>
-
-            <button id="scanBtn">📷 Escanear Cód. / Nota</button>
-
-        </div>
-
-    </div>
-
-
-
-    <div id="scanner-container">
-
-        <div id="reader"></div>
-
-        <button id="stopScanBtn" style="background-color: #dc3545; margin-top: 10px; width: 100%;">Fechar Câmera</button>
-
-    </div>
-
-
-
-    <h3>Itens Pendentes / Compras</h3>
-
-    <ul id="listaItens"></ul>
-
-
-
-    <div class="historico-section">
-
-        <h3>📋 Histórico de Notas Fiscais</h3>
-
-        <ul id="listaNotas"></ul>
-
-    </div>
-
-
-
-    <script src="https://unpkg.com/html5-qrcode"></script>
-
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
-
-
-
-    <script>
-
-        const firebaseConfig = {
-
-            apiKey: "AIzaSyCy7my7mba4Ii47drcrHjEXmcByRRZsN90",
-
-            authDomain: "lista-colaborativa-7790b.firebaseapp.com",
-
-            databaseURL: "https://lista-colaborativa-7790b-default-rtdb.firebaseio.com",
-
-            projectId: "lista-colaborativa-7790b",
-
-            storageBucket: "lista-colaborativa-7790b.firebasestorage.app",
-
-            messagingSenderId: "830696828500",
-
-            appId: "1:830696828500:web:2971388ec7ed99c10f87c1"
-
-        };
-
-
-
-        firebase.initializeApp(firebaseConfig);
-
-        const database = firebase.database();
-
-        const itensRef = database.ref('itens');
-
-        const notasRef = database.ref('historico_notas');
-
-
-
-        const itemInput = document.getElementById('itemInput');
-
-        const addBtn = document.getElementById('addBtn');
-
-        const scanBtn = document.getElementById('scanBtn');
-
-        const stopScanBtn = document.getElementById('stopScanBtn');
-
-        const scannerContainer = document.getElementById('scanner-container');
-
-        const listaItens = document.getElementById('listaItens');
-
-        const listaNotas = document.getElementById('listaNotas');
-
-        
-
-        let html5QrcodeScanner;
-
-
-
-        function adicionarItens() {
-
-            const textoCompleto = itemInput.value;
-
-            const linhas = textoCompleto.split('\n');
-
-            linhas.forEach(linha => {
-
-                const textoLimpo = linha.trim();
-
-                if (textoLimpo !== '') itensRef.push({ texto: textoLimpo, comprado: false });
-
-            });
-
-            itemInput.value = '';
-
-        }
-
-        addBtn.addEventListener('click', adicionarItens);
-
-
-
-        function alternarStatus(id, statusAtual) { itensRef.child(id).update({ comprado: !statusAtual }); }
-
-        function removerItem(id) { itensRef.child(id).remove(); }
-
-        function removerNota(id) { notasRef.child(id).remove(); }
-
-        function salvarEdicao(id, novoTexto) { if (novoTexto.trim() !== '') itensRef.child(id).update({ texto: novoTexto.trim() }); }
-
-
-
-        // Atualiza Lista de Compras
-
-        itensRef.on('value', (snapshot) => {
-
-            listaItens.innerHTML = '';
-
-            const dados = snapshot.val();
-
-            for (let id in dados) {
-
-                const item = dados[id];
-
-                const li = document.createElement('li');
-
-                if (item.comprado) li.classList.add('comprado');
-
-                
-
-                li.innerHTML = `
-
-                    <div class="item-corpo">
-
-                        <div class="checkbox" onclick="alternarStatus('${id}', ${item.comprado})"></div>
-
-                        <span class="texto-item" id="text-${id}">${item.texto}</span>
-
-                    </div>
-
-                    <span class="delete-btn" onclick="removerItem('${id}')">Excluir</span>
-
-                `;
-
-
-
-                const campoTexto = li.querySelector(`#text-${id}`);
-
-                campoTexto.addEventListener('dblclick', (e) => {
-
-                    e.stopPropagation();
-
-                    habilitarModoEdicao(id, item.texto, campoTexto.parentElement);
-
-                });
-
-                listaItens.appendChild(li);
-
-            }
-
-        });
-
-
-
-        function habilitarModoEdicao(id, textoAtual, container) {
-
-            const spanAntigo = container.querySelector('.texto-item');
-
-            if (!spanAntigo) return;
-
-            const input = document.createElement('input');
-
-            input.type = 'text'; input.className = 'edit-input'; input.value = textoAtual;
-
-            container.replaceChild(input, spanAntigo);
-
-            input.focus();
-
-            input.addEventListener('keypress', (e) => { if (e.key === 'Enter') salvarEdicao(id, input.value); });
-
-            input.addEventListener('blur', () => { salvarEdicao(id, input.value); });
-
-        }
-
-
-
-        // Atualiza Histórico de Notas Fiscais
-
-        notasRef.on('value', (snapshot) => {
-
-            listaNotas.innerHTML = '';
-
-            const dados = snapshot.val();
-
-            for (let id in dados) {
-
-                const nota = dados[id];
-
-                const li = document.createElement('li');
-
-                li.innerHTML = `
-
-                    <div style="display:flex; flex-direction:column; gap:4px; max-width:70%;">
-
-                        <strong style="font-size:14px;">🛒 Compra realizada</strong>
-
-                        <span style="font-size:12px; color:#666;">Data: ${nota.data}</span>
-
-                    </div>
-
-                    <div style="display:flex; gap:10px; align-items:center;">
-
-                        <a href="${nota.url}" target="_blank" class="btn-link">Abrir Nota</a>
-
-                        <span class="delete-btn" onclick="removerNota('${id}')">X</span>
-
-                    </div>
-
-                `;
-
-                listaNotas.appendChild(li);
-
-            }
-
-        });
-
-
-
-        // --- SCANNER INTELIGENTE (BARRAS OU QR CODE SEFAZ) ---
-
-        scanBtn.addEventListener('click', () => {
-
-            scannerContainer.style.display = 'block';
-
-            html5QrcodeScanner = new Html5Qrcode("reader");
-
-            const config = { 
-
-                fps: 15, 
-
-                qrbox: (width, height) => { return { width: width * 0.75, height: height * 0.5 }; },
-
-                // Dá suporte a Códigos de Barra de Mercado (EAN) e QR Code (Nota Fiscal)
-
-                formatsToSupport: [ 
-
-                    Html5QrcodeSupportedFormats.EAN_13, 
-
-                    Html5QrcodeSupportedFormats.EAN_8,
-
-                    Html5QrcodeSupportedFormats.QR_CODE 
-
-                ]
-
-            };
-
-
-
-            html5QrcodeScanner.start({ facingMode: "environment" }, config, onScanSuccess)
-
-            .catch(err => { alert("Erro na câmera: " + err); scannerContainer.style.display = 'none'; });
-
-        });
-
-
-
-        async function onScanSuccess(decodedText) {
-
-            if (navigator.vibrate) navigator.vibrate(100);
-
-            fecharScanner();
-
-
-
-            // IDENTIFICAÇÃO: É um QR Code de Nota Fiscal? (Geralmente contém "sefaz" ou "pfe")
-
-            if (decodedText.startsWith("http://") || decodedText.startsWith("https://")) {
-
-                const dataAtual = new Date().toLocaleString('pt-BR');
-
-                notasRef.push({
-
-                    url: decodedText,
-
-                    data: dataAtual
-
-                });
-
-                alert("Nota Fiscal identificada e salva no histórico com sucesso!");
-
-                return;
-
-            }
-
-
-
-            // Caso contrário, trata como Código de Barras de produto comum
-
-            try {
-
-                let response = await fetch(`https://world.openfoodfacts.org/api/v2/product/${decodedText}.json`);
-
-                let data = await response.json();
-
-                
-
-                if (data.status === 1 && data.product.product_name) {
-
-                    let nomeProduto = data.product.product_name;
-
-                    let marca = data.product.brands ? ` (${data.product.brands})` : '';
-
-                    itensRef.push({ texto: nomeProduto + marca, comprado: false });
-
-                } else {
-
-                    solicitarNomeProduto(decodedText);
-
-                }
-
-            } catch (error) {
-
-                solicitarNomeProduto(decodedText);
-
-            }
-
-        }
-
-
-
-        function solicitarNomeProduto(codigo) {
-
-            setTimeout(() => {
-
-                let nomeDigitado = prompt(`Código desconhecido (${codigo}).\nQual produto deseja adicionar?`);
-
-                if (nomeDigitado && nomeDigitado.trim() !== "") {
-
-                    itensRef.push({ texto: nomeDigitado.trim(), comprado: false });
-
-                }
-
-            }, 500);
-
-        }
-
-
-
-        function fecharScanner() {
-
-            if (html5QrcodeScanner) {
-
-                html5QrcodeScanner.stop().then(() => { scannerContainer.style.display = 'none'; })
-
-                .catch(err => { scannerContainer.style.display = 'none'; });
-
-            }
-
-        }
-
-        stopScanBtn.addEventListener('click', fecharScanner);
-
-    </script>
+<h2>🛒 Lista com Quantidade e Valor</h2>
+
+<textarea id="itemInput" placeholder="Nome do item"></textarea>
+
+<input id="qtdInput" type="number" placeholder="Quantidade" value="1">
+<input id="valorInput" type="number" step="0.01" placeholder="Valor unitário">
+
+<button onclick="adicionar()">Adicionar</button>
+
+<h3>Lista</h3>
+<div id="lista"></div>
+
+<div class="total" id="total">Total: R$ 0,00</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyCy7my7mba4Ii47drcrHjEXmcByRRzN90",
+  authDomain: "lista-colaborativa-7790b.firebaseapp.com",
+  databaseURL: "https://lista-colaborativa-7790b-default-rtdb.firebaseio.com",
+  projectId: "lista-colaborativa-7790b",
+  storageBucket: "lista-colaborativa-7790b.firebasestorage.app",
+  messagingSenderId: "830696828500",
+  appId: "1:830696828500:web:2971388ec7ed99c10f87c1"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+const ref = db.ref("itens");
+
+function adicionar() {
+  const texto = document.getElementById("itemInput").value;
+  const qtd = parseFloat(document.getElementById("qtdInput").value || 1);
+  const valor = parseFloat(document.getElementById("valorInput").value || 0);
+
+  if (!texto) return;
+
+  ref.push({
+    texto,
+    quantidade: qtd,
+    valor,
+    comprado: false
+  });
+
+  document.getElementById("itemInput").value = "";
+  document.getElementById("qtdInput").value = 1;
+  document.getElementById("valorInput").value = "";
+}
+
+function alternar(id, atual) {
+  ref.child(id).update({ comprado: !atual });
+}
+
+function remover(id) {
+  ref.child(id).remove();
+}
+
+ref.on("value", snap => {
+  const data = snap.val();
+  const lista = document.getElementById("lista");
+  lista.innerHTML = "";
+
+  let total = 0;
+
+  for (let id in data) {
+    const item = data[id];
+
+    const subtotal = (item.quantidade || 0) * (item.valor || 0);
+    total += subtotal;
+
+    const div = document.createElement("div");
+    div.className = "item-box";
+
+    div.innerHTML = `
+      <div>
+        <strong>${item.texto}</strong>
+      </div>
+      <div>
+        Qtd: ${item.quantidade} | R$ ${item.valor.toFixed(2)} | Subtotal: R$ ${subtotal.toFixed(2)}
+      </div>
+      <button onclick="alternar('${id}', ${item.comprado})">
+        ${item.comprado ? "Desmarcar" : "Comprar"}
+      </button>
+      <button onclick="remover('${id}')">Excluir</button>
+    `;
+
+    lista.appendChild(div);
+  }
+
+  document.getElementById("total").innerText =
+    "Total: R$ " + total.toFixed(2);
+});
+</script>
 
 </body>
-
-</html> 
-
+</html>
