@@ -76,10 +76,11 @@
     <ul id="listaNotas"></ul>
 
     <script src="https://unpkg.com/html5-qrcode"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <script>
+        // Configuração do Banco de Dados
         const firebaseConfig = {
             apiKey: "AIzaSyCy7my7mba4Ii47drcrHjEXmcByRRZsN90",
             authDomain: "lista-colaborativa-7790b.firebaseapp.com",
@@ -90,7 +91,11 @@
             appId: "1:830696828500:web:2971388ec7ed99c10f87c1"
         };
 
-        firebase.initializeApp(firebaseConfig);
+        // Inicialização Segura
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        
         const database = firebase.database();
         const itensRef = database.ref('itens');
         const notasRef = database.ref('historico_notas');
@@ -106,12 +111,23 @@
         
         let html5QrcodeScanner;
 
+        // Função para Adicionar Itens com feedback de erro caso o banco rejeite
         function adicionarItens() {
             const texto = itemInput.value.trim();
             const qtd = parseInt(qtdInput.value) || 1;
             if (texto !== '') {
-                itensRef.push({ texto: texto, quantidade: qtd, comprado: false });
-                itemInput.value = ''; qtdInput.value = '1';
+                itensRef.push({ 
+                    texto: texto, 
+                    quantidade: qtd, 
+                    comprado: false 
+                }, function(error) {
+                    if (error) {
+                        alert("Erro do Firebase: O banco rejeitou a gravação. Verifique as suas Regras (Rules) no painel do Firebase.");
+                    } else {
+                        itemInput.value = ''; 
+                        qtdInput.value = '1';
+                    }
+                });
             }
         }
         addBtn.addEventListener('click', adicionarItens);
@@ -120,9 +136,14 @@
         function removerItem(id) { itensRef.child(id).remove(); }
         function removerNota(id) { notasRef.child(id).remove(); }
 
+        // Escuta em tempo real dos itens
         itensRef.on('value', (snapshot) => {
             listaItens.innerHTML = '';
             const dados = snapshot.val();
+            if(!dados) {
+                listaItens.innerHTML = '<li style="color:#888; justify-content:center;">Nenhum item na lista.</li>';
+                return;
+            }
             for (let id in dados) {
                 const item = dados[id];
                 const li = document.createElement('li');
@@ -130,29 +151,111 @@
                 li.innerHTML = `
                     <div class="item-corpo" onclick="alternarStatus('${id}', ${item.comprado})">
                         <div class="checkbox"></div>
-                        <span class="texto-item">${item.texto} <span class="qtd-badge">${item.quantidade}x</span></span>
+                        <span class="texto-item">${item.texto} <span class="qtd-badge">${item.quantidade || 1}x</span></span>
                     </div>
-                    <span class="delete-btn" onclick="removerItem('${id}')">Excluir</span>
+                    <span class="delete-btn" onclick="event.stopPropagation(); removerItem('${id}')">Excluir</span>
                 `;
                 listaItens.appendChild(li);
             }
+        }, (error) => {
+            alert("Erro de Leitura: Sem permissão para ler dados. " + error.message);
         });
 
+        // Escuta em tempo real do histórico filtrado por 3 meses
         notasRef.on('value', (snapshot) => {
             listaNotas.innerHTML = '';
             const dados = snapshot.val();
+            if(!dados) {
+                listaNotas.innerHTML = '<li style="color:#888; justify-content:center;">Nenhuma nota nos últimos 3 meses.</li>';
+                return;
+            }
             const limiteData = new Date();
-            limiteData.setMonth(limiteData.getMonth() - 3); // Define o filtro de 3 meses atrás
+            limiteData.setMonth(limiteData.getMonth() - 3);
+
+            let temNotaExibida = false;
 
             for (let id in dados) {
                 const nota = dados[id];
                 const dataNota = new Date(nota.timestamp || nota.data.split(',')[0].split('/').reverse().join('-'));
                 
-                // Exibe apenas se a nota for dos últimos 3 meses
                 if (dataNota >= limiteData) {
+                    temNotaExibida = true;
                     const li = document.createElement('li');
-                    const valorFormatado = parseFloat(nota.valor).toFixed(2).replace('.', ',');
+                    const valorFormatado = parseFloat(nota.valor || 0).toFixed(2).replace('.', ',');
                     li.innerHTML = `
                         <div style="display:flex; flex-direction:column; gap:2px;">
                             <span style="font-size:12px; color:#7f8c8d;">${nota.data}</span>
-                            <div class="
+                            <div class="valor-nota">R$ ${valorFormatado}</div>
+                        </div>
+                        <div style="display:flex; gap:8px; align-items:center;">
+                            <a href="${nota.url}" target="_blank" class="btn-link">Link</a>
+                            <span class="delete-btn" onclick="removerNota('${id}')">X</span>
+                        </div>
+                    `;
+                    listaNotas.appendChild(li);
+                }
+            }
+            if(!temNotaExibida) {
+                listaNotas.innerHTML = '<li style="color:#888; justify-content:center;">Nenhuma nota nos últimos 3 meses.</li>';
+            }
+        });
+
+        // Controle do Scanner
+        scanBtn.addEventListener('click', () => {
+            scannerContainer.style.display = 'block';
+            html5QrcodeScanner = new Html5Qrcode("reader");
+            const config = { fps: 15, qrbox: (w, h) => ({ width: w * 0.75, height: h * 0.5 }), formatsToSupport: [Html5QrcodeSupportedFormats.EAN_13, Html5QrcodeSupportedFormats.QR_CODE] };
+            html5QrcodeScanner.start({ facingMode: "environment" }, config, onScanSuccess).catch(() => scannerContainer.style.display = 'none');
+        });
+
+        async function onScanSuccess(decodedText) {
+            if (navigator.vibrate) navigator.vibrate(100);
+            fecharScanner();
+
+            if (decodedText.startsWith("http://") || decodedText.startsWith("https://")) {
+                const agora = new Date();
+                const dataAtual = agora.toLocaleString('pt-BR');
+                
+                setTimeout(() => {
+                    let valor = prompt("Qual o valor total da Nota Fiscal?");
+                    if (valor === null) return; // cancelou
+                    valor = parseFloat(valor.replace(',', '.')) || 0;
+
+                    // Salva Nota
+                    notasRef.push({ url: decodedText, data: dataAtual, valor: valor, timestamp: agora.getTime() });
+                    
+                    // Adiciona Item Automático na lista
+                    itensRef.push({ texto: `Cupom Fiscal (R$ ${valor.toFixed(2).replace('.', ',')})`, quantidade: 1, comprado: true });
+                }, 300);
+                return;
+            }
+
+            try {
+                let res = await fetch(`https://world.openfoodfacts.org/api/v2/product/${decodedText}.json`);
+                let data = await res.json();
+                if (data.status === 1 && data.product.product_name) {
+                    itensRef.push({ texto: data.product.product_name, quantidade: 1, comprado: false });
+                } else {
+                    solicitarNome(decodedText);
+                }
+            } catch {
+                solicitarNome(decodedText);
+            }
+        }
+
+        function solicitarNome(codigo) {
+            setTimeout(() => {
+                let nome = prompt("Produto não encontrado. Digite o nome:");
+                if (nome && nome.trim() !== "") itensRef.push({ texto: nome.trim(), quantidade: 1, comprado: false });
+            }, 500);
+        }
+
+        function fecharScanner() {
+            if (html5QrcodeScanner) {
+                html5QrcodeScanner.stop().then(() => scannerContainer.style.display = 'none').catch(() => scannerContainer.style.display = 'none');
+            }
+        }
+        stopScanBtn.addEventListener('click', fecharScanner);
+    </script>
+</body>
+</html>
