@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Lista Mercado + Edição + Total</title>
+<title>Lista Mercado Inteligente</title>
 
 <style>
 body {
@@ -49,11 +49,12 @@ button {
 
 <h2>🛒 Lista Mercado Inteligente</h2>
 
-<textarea id="itemInput" placeholder="Nome do item"></textarea>
-<input id="qtdInput" type="number" value="1" placeholder="Quantidade">
-<input id="valorInput" type="number" step="0.01" placeholder="Valor unitário">
+<textarea id="itemInput" placeholder="Digite vários itens (um por linha)"></textarea>
 
-<button onclick="adicionar()">Adicionar Item</button>
+<input id="qtdInput" type="number" value="1" placeholder="Quantidade padrão">
+<input id="valorInput" type="number" step="0.01" placeholder="Valor padrão">
+
+<button onclick="adicionar()">Adicionar Itens</button>
 
 <h3>Lista</h3>
 <div id="lista"></div>
@@ -65,7 +66,7 @@ button {
 
 <script>
 const firebaseConfig = {
-  apiKey: "AIzaSyCy7my7mba4Ii47drcrHjEXmcByRRzN90",
+  apiKey: "AIzaSyCy7my7mba4Ii47drcrhJEXmcByRRzN90",
   authDomain: "lista-colaborativa-7790b.firebaseapp.com",
   databaseURL: "https://lista-colaborativa-7790b-default-rtdb.firebaseio.com",
   projectId: "lista-colaborativa-7790b",
@@ -77,27 +78,33 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const ref = firebase.database().ref("itens");
 
-// ------------------ ADICIONAR ------------------
+// ------------------ ADICIONAR VÁRIOS ------------------
 function adicionar() {
   const texto = document.getElementById("itemInput").value;
-  const qtd = parseFloat(document.getElementById("qtdInput").value || 1);
-  const valor = parseFloat(document.getElementById("valorInput").value || 0);
 
-  if (!texto) return;
+  const qtdPadrao = parseFloat(document.getElementById("qtdInput").value || 1);
+  const valorPadrao = parseFloat(document.getElementById("valorInput").value || 0);
 
-  ref.push({
-    texto,
-    quantidade: qtd,
-    valor,
-    comprado: false
+  if (!texto.trim()) return;
+
+  const linhas = texto.split("\n");
+
+  linhas.forEach(linha => {
+    const item = linha.trim();
+    if (item !== "") {
+      ref.push({
+        texto: item,
+        quantidade: qtdPadrao,
+        valor: valorPadrao,
+        comprado: false
+      });
+    }
   });
 
   document.getElementById("itemInput").value = "";
-  document.getElementById("qtdInput").value = 1;
-  document.getElementById("valorInput").value = "";
 }
 
-// ------------------ ALTERA STATUS ------------------
+// ------------------ ALTERAR STATUS ------------------
 function alternar(id, atual) {
   ref.child(id).update({ comprado: !atual });
 }
