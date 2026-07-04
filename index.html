@@ -1,261 +1,568 @@
+
+Conversa com o Gemini
 <!DOCTYPE html>
+
 <html lang="pt-br">
+
 <head>
+
     <meta charset="UTF-8">
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lista & Notas</title>
+
+    <title>Lista Colaborativa & Notas</title>
+
     <style>
+
         body { 
+
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+
             max-width: 500px; 
+
             margin: 20px auto; 
+
             padding: 20px; 
-            background-color: #f4f6f9;
+
+            background-color: #f9f9f9;
+
         }
-        h3 { color: #2c3e50; text-align: center; margin: 20px 0 10px 0; }
-        .input-container { display: flex; gap: 10px; margin-bottom: 20px; flex-direction: column; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        .row-inputs { display: flex; gap: 10px; }
+
+        h2, h3 { color: #333; text-align: center; }
+
+        .input-container { display: flex; gap: 10px; margin-bottom: 20px; flex-direction: column; }
+
         textarea { 
-            flex: 2; height: 45px; padding: 10px; border: 1px solid #ccd1d9; border-radius: 6px; font-size: 15px; resize: none; box-sizing: border-box;
+
+            width: 100%; 
+
+            height: 80px;
+
+            padding: 12px; 
+
+            border: 1px solid #ccc; 
+
+            border-radius: 6px; 
+
+            font-size: 16px; 
+
+            resize: vertical;
+
+            box-sizing: border-box;
+
         }
-        .qty-input {
-            width: 70px; height: 45px; padding: 10px; border: 1px solid #ccd1d9; border-radius: 6px; font-size: 15px; text-align: center; box-sizing: border-box;
-        }
+
         .btn-group { display: flex; gap: 10px; }
+
         button { 
-            flex: 1; padding: 12px 10px; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: bold;
+
+            flex: 1;
+
+            padding: 12px 10px; 
+
+            color: white; 
+
+            border: none; 
+
+            border-radius: 6px; 
+
+            cursor: pointer; 
+
+            font-size: 15px; 
+
+            font-weight: bold;
+
         }
+
         #addBtn { background-color: #007bff; }
+
+        #addBtn:hover { background-color: #0056b3; }
+
         #scanBtn { background-color: #28a745; }
+
+        #scanBtn:hover { background-color: #218838; }
+
         
-        #scanner-container { display: none; margin-bottom: 20px; background: #fff; padding: 10px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+
+        #scanner-container {
+
+            display: none;
+
+            margin-bottom: 20px;
+
+            background: #fff;
+
+            padding: 10px;
+
+            border-radius: 8px;
+
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+
+        }
+
         #reader { width: 100%; }
 
-        ul { list-style-type: none; padding: 0; }
-        li { 
-            padding: 12px 15px; background: white; margin-bottom: 8px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.03);
-        }
-        .item-corpo { display: flex; align-items: center; gap: 12px; flex: 1; cursor: pointer; }
-        .checkbox { width: 18px; height: 18px; border: 2px solid #007bff; border-radius: 4px; position: relative; flex-shrink: 0; }
-        .texto-item { flex: 1; font-size: 15px; color: #333; }
-        .qtd-badge { background: #e6f2ff; color: #007bff; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: bold; margin-left: 5px; }
 
-        li.comprado { background-color: #f1f3f5; opacity: 0.65; }
-        li.comprado span.texto-item { text-decoration: line-through; color: #6c757d; }
-        li.comprado .qtd-badge { background: #e9ecef; color: #6c757d; }
-        li.comprado .checkbox { background-color: #007bff; border-color: #007bff; }
-        li.comprado .checkbox::after { content: '✓'; color: white; position: absolute; top: -3px; left: 2px; font-size: 13px; font-weight: bold; }
+
+        ul { list-style-type: none; padding: 0; }
+
+        li { 
+
+            padding: 12px 15px; 
+
+            background: white; 
+
+            margin-bottom: 8px; 
+
+            border-radius: 6px; 
+
+            display: flex; 
+
+            justify-content: space-between; 
+
+            align-items: center;
+
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+
+        }
+
+        .item-corpo { display: flex; align-items: center; gap: 12px; flex: 1; cursor: pointer; }
+
+        .checkbox { width: 18px; height: 18px; border: 2px solid #007bff; border-radius: 4px; position: relative; flex-shrink: 0; }
+
         
-        .delete-btn { color: #dc3545; cursor: pointer; font-weight: bold; padding: 5px 10px; border-radius: 4px; font-size: 13px; }
+
+        .texto-item { flex: 1; font-size: 16px; }
+
+        .edit-input { flex: 1; font-size: 16px; padding: 4px; border: 1px solid #007bff; border-radius: 4px; }
+
+
+
+        li.comprado { background-color: #e9ecef; opacity: 0.6; }
+
+        li.comprado span.texto-item { text-decoration: line-through; color: #6c757d; }
+
+        li.comprado .checkbox { background-color: #007bff; border-color: #007bff; }
+
+        li.comprado .checkbox::after { content: '✓'; color: white; position: absolute; top: -2px; left: 3px; font-size: 14px; font-weight: bold; }
+
+        
+
+        .delete-btn { color: #dc3545; cursor: pointer; font-weight: bold; padding: 5px 10px; border-radius: 4px; margin-left: 10px; }
+
+        
+
         .btn-link { background-color: #17a2b8; font-size: 12px; padding: 6px 10px; text-decoration: none; color: white; border-radius: 4px; font-weight: bold; }
-        .valor-nota { font-weight: bold; color: #27ae60; font-size: 14px; }
+
+        .btn-link:hover { background-color: #117a8b; }
+
+
+
+        .historico-section { margin-top: 30px; border-top: 2px dashed #ccc; padding-top: 20px; }
+
+        .dica-edicao { text-align: center; font-size: 12px; color: #888; margin-top: -10px; margin-bottom: 15px; }
+
     </style>
+
 </head>
+
 <body>
 
+
+
+    <h2>📝 Lista Mercado em Tempo Real</h2>
+
+    <p class="dica-edicao">💡 Toque 2x no texto para editar. Use a câmera para Produtos ou Cupom Fiscal.</p>
+
+    
+
     <div class="input-container">
-        <div class="row-inputs">
-            <textarea id="itemInput" placeholder="Digite o item..."></textarea>
-            <input type="number" id="qtdInput" class="qty-input" value="1" min="1">
-        </div>
+
+        <textarea id="itemInput" placeholder="Digite seus itens aqui (um por linha)..."></textarea>
+
         <div class="btn-group">
-            <button id="addBtn">Adicionar</button>
-            <button id="scanBtn">📷 Escanear</button>
+
+            <button id="addBtn">Adicionar Texto</button>
+
+            <button id="scanBtn">📷 Escanear Cód. / Nota</button>
+
         </div>
+
     </div>
+
+
 
     <div id="scanner-container">
+
         <div id="reader"></div>
+
         <button id="stopScanBtn" style="background-color: #dc3545; margin-top: 10px; width: 100%;">Fechar Câmera</button>
+
     </div>
 
-    <h3>Lista de Compras</h3>
+
+
+    <h3>Itens Pendentes / Compras</h3>
+
     <ul id="listaItens"></ul>
 
-    <h3>Histórico (Últimos 3 Meses)</h3>
-    <ul id="listaNotas"></ul>
+
+
+    <div class="historico-section">
+
+        <h3>📋 Histórico de Notas Fiscais</h3>
+
+        <ul id="listaNotas"></ul>
+
+    </div>
+
+
 
     <script src="https://unpkg.com/html5-qrcode"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+
+
 
     <script>
-        // Configuração do Banco de Dados
+
         const firebaseConfig = {
+
             apiKey: "AIzaSyCy7my7mba4Ii47drcrHjEXmcByRRZsN90",
+
             authDomain: "lista-colaborativa-7790b.firebaseapp.com",
+
             databaseURL: "https://lista-colaborativa-7790b-default-rtdb.firebaseio.com",
+
             projectId: "lista-colaborativa-7790b",
+
             storageBucket: "lista-colaborativa-7790b.firebasestorage.app",
+
             messagingSenderId: "830696828500",
+
             appId: "1:830696828500:web:2971388ec7ed99c10f87c1"
+
         };
 
-        // Inicialização Segura
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        }
-        
+
+
+        firebase.initializeApp(firebaseConfig);
+
         const database = firebase.database();
+
         const itensRef = database.ref('itens');
+
         const notasRef = database.ref('historico_notas');
 
+
+
         const itemInput = document.getElementById('itemInput');
-        const qtdInput = document.getElementById('qtdInput');
+
         const addBtn = document.getElementById('addBtn');
+
         const scanBtn = document.getElementById('scanBtn');
+
         const stopScanBtn = document.getElementById('stopScanBtn');
+
         const scannerContainer = document.getElementById('scanner-container');
+
         const listaItens = document.getElementById('listaItens');
+
         const listaNotas = document.getElementById('listaNotas');
+
         
+
         let html5QrcodeScanner;
 
-        // Função para Adicionar Itens com feedback de erro caso o banco rejeite
+
+
         function adicionarItens() {
-            const texto = itemInput.value.trim();
-            const qtd = parseInt(qtdInput.value) || 1;
-            if (texto !== '') {
-                itensRef.push({ 
-                    texto: texto, 
-                    quantidade: qtd, 
-                    comprado: false 
-                }, function(error) {
-                    if (error) {
-                        alert("Erro do Firebase: O banco rejeitou a gravação. Verifique as suas Regras (Rules) no painel do Firebase.");
-                    } else {
-                        itemInput.value = ''; 
-                        qtdInput.value = '1';
-                    }
-                });
-            }
+
+            const textoCompleto = itemInput.value;
+
+            const linhas = textoCompleto.split('\n');
+
+            linhas.forEach(linha => {
+
+                const textoLimpo = linha.trim();
+
+                if (textoLimpo !== '') itensRef.push({ texto: textoLimpo, comprado: false });
+
+            });
+
+            itemInput.value = '';
+
         }
+
         addBtn.addEventListener('click', adicionarItens);
 
+
+
         function alternarStatus(id, statusAtual) { itensRef.child(id).update({ comprado: !statusAtual }); }
+
         function removerItem(id) { itensRef.child(id).remove(); }
+
         function removerNota(id) { notasRef.child(id).remove(); }
 
-        // Escuta em tempo real dos itens
+        function salvarEdicao(id, novoTexto) { if (novoTexto.trim() !== '') itensRef.child(id).update({ texto: novoTexto.trim() }); }
+
+
+
+        // Atualiza Lista de Compras
+
         itensRef.on('value', (snapshot) => {
+
             listaItens.innerHTML = '';
+
             const dados = snapshot.val();
-            if(!dados) {
-                listaItens.innerHTML = '<li style="color:#888; justify-content:center;">Nenhum item na lista.</li>';
-                return;
-            }
+
             for (let id in dados) {
+
                 const item = dados[id];
+
                 const li = document.createElement('li');
+
                 if (item.comprado) li.classList.add('comprado');
+
+                
+
                 li.innerHTML = `
-                    <div class="item-corpo" onclick="alternarStatus('${id}', ${item.comprado})">
-                        <div class="checkbox"></div>
-                        <span class="texto-item">${item.texto} <span class="qtd-badge">${item.quantidade || 1}x</span></span>
+
+                    <div class="item-corpo">
+
+                        <div class="checkbox" onclick="alternarStatus('${id}', ${item.comprado})"></div>
+
+                        <span class="texto-item" id="text-${id}">${item.texto}</span>
+
                     </div>
-                    <span class="delete-btn" onclick="event.stopPropagation(); removerItem('${id}')">Excluir</span>
+
+                    <span class="delete-btn" onclick="removerItem('${id}')">Excluir</span>
+
                 `;
+
+
+
+                const campoTexto = li.querySelector(`#text-${id}`);
+
+                campoTexto.addEventListener('dblclick', (e) => {
+
+                    e.stopPropagation();
+
+                    habilitarModoEdicao(id, item.texto, campoTexto.parentElement);
+
+                });
+
                 listaItens.appendChild(li);
+
             }
-        }, (error) => {
-            alert("Erro de Leitura: Sem permissão para ler dados. " + error.message);
+
         });
 
-        // Escuta em tempo real do histórico filtrado por 3 meses
-        notasRef.on('value', (snapshot) => {
-            listaNotas.innerHTML = '';
-            const dados = snapshot.val();
-            if(!dados) {
-                listaNotas.innerHTML = '<li style="color:#888; justify-content:center;">Nenhuma nota nos últimos 3 meses.</li>';
-                return;
-            }
-            const limiteData = new Date();
-            limiteData.setMonth(limiteData.getMonth() - 3);
 
-            let temNotaExibida = false;
+
+        function habilitarModoEdicao(id, textoAtual, container) {
+
+            const spanAntigo = container.querySelector('.texto-item');
+
+            if (!spanAntigo) return;
+
+            const input = document.createElement('input');
+
+            input.type = 'text'; input.className = 'edit-input'; input.value = textoAtual;
+
+            container.replaceChild(input, spanAntigo);
+
+            input.focus();
+
+            input.addEventListener('keypress', (e) => { if (e.key === 'Enter') salvarEdicao(id, input.value); });
+
+            input.addEventListener('blur', () => { salvarEdicao(id, input.value); });
+
+        }
+
+
+
+        // Atualiza Histórico de Notas Fiscais
+
+        notasRef.on('value', (snapshot) => {
+
+            listaNotas.innerHTML = '';
+
+            const dados = snapshot.val();
 
             for (let id in dados) {
+
                 const nota = dados[id];
-                const dataNota = new Date(nota.timestamp || nota.data.split(',')[0].split('/').reverse().join('-'));
-                
-                if (dataNota >= limiteData) {
-                    temNotaExibida = true;
-                    const li = document.createElement('li');
-                    const valorFormatado = parseFloat(nota.valor || 0).toFixed(2).replace('.', ',');
-                    li.innerHTML = `
-                        <div style="display:flex; flex-direction:column; gap:2px;">
-                            <span style="font-size:12px; color:#7f8c8d;">${nota.data}</span>
-                            <div class="valor-nota">R$ ${valorFormatado}</div>
-                        </div>
-                        <div style="display:flex; gap:8px; align-items:center;">
-                            <a href="${nota.url}" target="_blank" class="btn-link">Link</a>
-                            <span class="delete-btn" onclick="removerNota('${id}')">X</span>
-                        </div>
-                    `;
-                    listaNotas.appendChild(li);
-                }
+
+                const li = document.createElement('li');
+
+                li.innerHTML = `
+
+                    <div style="display:flex; flex-direction:column; gap:4px; max-width:70%;">
+
+                        <strong style="font-size:14px;">🛒 Compra realizada</strong>
+
+                        <span style="font-size:12px; color:#666;">Data: ${nota.data}</span>
+
+                    </div>
+
+                    <div style="display:flex; gap:10px; align-items:center;">
+
+                        <a href="${nota.url}" target="_blank" class="btn-link">Abrir Nota</a>
+
+                        <span class="delete-btn" onclick="removerNota('${id}')">X</span>
+
+                    </div>
+
+                `;
+
+                listaNotas.appendChild(li);
+
             }
-            if(!temNotaExibida) {
-                listaNotas.innerHTML = '<li style="color:#888; justify-content:center;">Nenhuma nota nos últimos 3 meses.</li>';
-            }
+
         });
 
-        // Controle do Scanner
+
+
+        // --- SCANNER INTELIGENTE (BARRAS OU QR CODE SEFAZ) ---
+
         scanBtn.addEventListener('click', () => {
+
             scannerContainer.style.display = 'block';
+
             html5QrcodeScanner = new Html5Qrcode("reader");
-            const config = { fps: 15, qrbox: (w, h) => ({ width: w * 0.75, height: h * 0.5 }), formatsToSupport: [Html5QrcodeSupportedFormats.EAN_13, Html5QrcodeSupportedFormats.QR_CODE] };
-            html5QrcodeScanner.start({ facingMode: "environment" }, config, onScanSuccess).catch(() => scannerContainer.style.display = 'none');
+
+            const config = { 
+
+                fps: 15, 
+
+                qrbox: (width, height) => { return { width: width * 0.75, height: height * 0.5 }; },
+
+                // Dá suporte a Códigos de Barra de Mercado (EAN) e QR Code (Nota Fiscal)
+
+                formatsToSupport: [ 
+
+                    Html5QrcodeSupportedFormats.EAN_13, 
+
+                    Html5QrcodeSupportedFormats.EAN_8,
+
+                    Html5QrcodeSupportedFormats.QR_CODE 
+
+                ]
+
+            };
+
+
+
+            html5QrcodeScanner.start({ facingMode: "environment" }, config, onScanSuccess)
+
+            .catch(err => { alert("Erro na câmera: " + err); scannerContainer.style.display = 'none'; });
+
         });
+
+
 
         async function onScanSuccess(decodedText) {
+
             if (navigator.vibrate) navigator.vibrate(100);
+
             fecharScanner();
 
-            if (decodedText.startsWith("http://") || decodedText.startsWith("https://")) {
-                const agora = new Date();
-                const dataAtual = agora.toLocaleString('pt-BR');
-                
-                setTimeout(() => {
-                    let valor = prompt("Qual o valor total da Nota Fiscal?");
-                    if (valor === null) return; // cancelou
-                    valor = parseFloat(valor.replace(',', '.')) || 0;
 
-                    // Salva Nota
-                    notasRef.push({ url: decodedText, data: dataAtual, valor: valor, timestamp: agora.getTime() });
-                    
-                    // Adiciona Item Automático na lista
-                    itensRef.push({ texto: `Cupom Fiscal (R$ ${valor.toFixed(2).replace('.', ',')})`, quantidade: 1, comprado: true });
-                }, 300);
+
+            // IDENTIFICAÇÃO: É um QR Code de Nota Fiscal? (Geralmente contém "sefaz" ou "pfe")
+
+            if (decodedText.startsWith("http://") || decodedText.startsWith("https://")) {
+
+                const dataAtual = new Date().toLocaleString('pt-BR');
+
+                notasRef.push({
+
+                    url: decodedText,
+
+                    data: dataAtual
+
+                });
+
+                alert("Nota Fiscal identificada e salva no histórico com sucesso!");
+
                 return;
+
             }
+
+
+
+            // Caso contrário, trata como Código de Barras de produto comum
 
             try {
-                let res = await fetch(`https://world.openfoodfacts.org/api/v2/product/${decodedText}.json`);
-                let data = await res.json();
+
+                let response = await fetch(`https://world.openfoodfacts.org/api/v2/product/${decodedText}.json`);
+
+                let data = await response.json();
+
+                
+
                 if (data.status === 1 && data.product.product_name) {
-                    itensRef.push({ texto: data.product.product_name, quantidade: 1, comprado: false });
+
+                    let nomeProduto = data.product.product_name;
+
+                    let marca = data.product.brands ? ` (${data.product.brands})` : '';
+
+                    itensRef.push({ texto: nomeProduto + marca, comprado: false });
+
                 } else {
-                    solicitarNome(decodedText);
+
+                    solicitarNomeProduto(decodedText);
+
                 }
-            } catch {
-                solicitarNome(decodedText);
+
+            } catch (error) {
+
+                solicitarNomeProduto(decodedText);
+
             }
+
         }
 
-        function solicitarNome(codigo) {
+
+
+        function solicitarNomeProduto(codigo) {
+
             setTimeout(() => {
-                let nome = prompt("Produto não encontrado. Digite o nome:");
-                if (nome && nome.trim() !== "") itensRef.push({ texto: nome.trim(), quantidade: 1, comprado: false });
+
+                let nomeDigitado = prompt(`Código desconhecido (${codigo}).\nQual produto deseja adicionar?`);
+
+                if (nomeDigitado && nomeDigitado.trim() !== "") {
+
+                    itensRef.push({ texto: nomeDigitado.trim(), comprado: false });
+
+                }
+
             }, 500);
+
         }
+
+
 
         function fecharScanner() {
+
             if (html5QrcodeScanner) {
-                html5QrcodeScanner.stop().then(() => scannerContainer.style.display = 'none').catch(() => scannerContainer.style.display = 'none');
+
+                html5QrcodeScanner.stop().then(() => { scannerContainer.style.display = 'none'; })
+
+                .catch(err => { scannerContainer.style.display = 'none'; });
+
             }
+
         }
+
         stopScanBtn.addEventListener('click', fecharScanner);
+
     </script>
+
 </body>
-</html>
+
+</html> 
+
