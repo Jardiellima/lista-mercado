@@ -1,4 +1,4 @@
-2
+3
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -36,6 +36,11 @@ button {
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
+.comprado {
+  text-decoration: line-through;
+  opacity: 0.6;
+}
+
 .total {
   font-size: 20px;
   font-weight: bold;
@@ -43,21 +48,17 @@ button {
   margin-top: 20px;
 }
 
-.comprado {
-  text-decoration: line-through;
-  opacity: 0.6;
-}
-
-.inline {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-}
-
 .valor-input {
   width: 80px;
-  padding: 4px;
+}
+
+.history-box {
+  background: #fff;
+  padding: 10px;
+  margin-top: 15px;
+  border-radius: 6px;
+  display: none;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 </style>
 </head>
@@ -73,10 +74,15 @@ button {
 
 <button onclick="adicionar()">Adicionar Itens</button>
 
-<h3>Lista</h3>
+<button onclick="toggleHistory()">📜 Ver/ocultar histórico</button>
+
+<h3>Lista atual</h3>
 <div id="lista"></div>
 
 <div class="total" id="total">Total: R$ 0,00</div>
+
+<h3>Histórico de compras</h3>
+<div id="history" class="history-box"></div>
 
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
@@ -94,6 +100,7 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 const ref = firebase.database().ref("itens");
+const historyRef = firebase.database().ref("historico");
 
 // ---------------- ADICIONAR ----------------
 function adicionar() {
@@ -118,9 +125,20 @@ function adicionar() {
   document.getElementById("itemInput").value = "";
 }
 
-// ---------------- TOGGLE COMPRADO ----------------
-function alternar(id, atual) {
-  ref.child(id).update({ comprado: !atual });
+// ---------------- COMPRAR + HISTÓRICO ----------------
+function alternar(id, item) {
+  const novoStatus = !item.comprado;
+
+  ref.child(id).update({ comprado: novoStatus });
+
+  if (novoStatus) {
+    historyRef.push({
+      texto: item.texto,
+      quantidade: item.quantidade,
+      valor: item.valor,
+      data: new Date().toLocaleString()
+    });
+  }
 }
 
 // ---------------- REMOVER ----------------
@@ -137,14 +155,13 @@ function mudarQtd(id, atual, delta) {
 
 // ---------------- ALTERAR VALOR ----------------
 function mudarValor(id, valor) {
-  const novo = prompt("Novo valor:", valor);
-  const num = parseFloat(novo);
-  if (!isNaN(num) && num >= 0) {
+  const num = parseFloat(valor);
+  if (!isNaN(num)) {
     ref.child(id).update({ valor: num });
   }
 }
 
-// ---------------- RENDER ----------------
+// ---------------- RENDER LISTA ----------------
 ref.on("value", snap => {
   const data = snap.val() || {};
   const lista = document.getElementById("lista");
@@ -166,28 +183,21 @@ ref.on("value", snap => {
     if (item.comprado) div.classList.add("comprado");
 
     div.innerHTML = `
-      <div class="inline">
-        <strong>${item.texto}</strong>
-      </div>
+      <strong>${item.texto}</strong><br>
 
-      <div class="inline">
-        <div>
-          Qtd: ${qtd}
-          <button onclick="mudarQtd('${id}', ${qtd}, -1)">-</button>
-          <button onclick="mudarQtd('${id}', ${qtd}, 1)">+</button>
-        </div>
+      Qtd: ${qtd}
+      <button onclick="mudarQtd('${id}', ${qtd}, -1)">-</button>
+      <button onclick="mudarQtd('${id}', ${qtd}, 1)">+</button>
 
-        <div>
-          R$ <input class="valor-input" value="${valor}" 
-          onchange="mudarValor('${id}', this.value)">
-        </div>
-      </div>
+      <br>
 
-      <div>
-        Subtotal: R$ ${subtotal.toFixed(2)}
-      </div>
+      R$ <input class="valor-input" value="${valor}"
+      onchange="mudarValor('${id}', this.value)">
 
-      <button onclick="alternar('${id}', ${item.comprado})">
+      <br>
+      Subtotal: R$ ${subtotal.toFixed(2)}<br>
+
+      <button onclick="alternar('${id}', ${JSON.stringify(item).replace(/"/g, '&quot;')})">
         ${item.comprado ? "Desmarcar" : "Comprar"}
       </button>
 
@@ -200,6 +210,30 @@ ref.on("value", snap => {
   document.getElementById("total").innerText =
     "Total: R$ " + total.toFixed(2);
 });
+
+// ---------------- HISTÓRICO ----------------
+historyRef.on("value", snap => {
+  const data = snap.val() || {};
+  const history = document.getElementById("history");
+  history.innerHTML = "";
+
+  Object.values(data).forEach(item => {
+    const div = document.createElement("div");
+    div.innerHTML = `
+      🛒 ${item.texto} - Qtd: ${item.quantidade} - R$ ${item.valor}
+      <br>
+      📅 ${item.data}
+      <hr>
+    `;
+    history.appendChild(div);
+  });
+});
+
+// ---------------- TOGGLE HISTORY ----------------
+function toggleHistory() {
+  const h = document.getElementById("history");
+  h.style.display = h.style.display === "none" ? "block" : "none";
+}
 </script>
 
 </body>
