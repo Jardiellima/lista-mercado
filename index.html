@@ -1,240 +1,935 @@
-33
+```html
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Lista Mercado Inteligente</title>
+
+<title>Controle de Pressão Arterial</title>
 
 <style>
+
 body {
-  font-family: 'Segoe UI', Tahoma;
-  max-width: 600px;
+  font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+  max-width: 700px;
   margin: auto;
   padding: 20px;
   background: #f5f5f5;
+  color: #333;
 }
 
-textarea, input {
+h2 {
+  text-align: center;
+}
+
+.card {
+  background: white;
+  padding: 15px;
+  margin: 15px 0;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}
+
+input,
+textarea,
+select {
   width: 100%;
   padding: 10px;
-  margin: 5px 0;
+  margin: 5px 0 12px;
   box-sizing: border-box;
+  border: 1px solid #ccc;
+  border-radius: 5px;
 }
 
 button {
-  padding: 8px;
+  padding: 9px 12px;
   cursor: pointer;
-  margin: 2px;
+  margin: 3px;
+  border: none;
+  border-radius: 5px;
+  background: #1976d2;
+  color: white;
 }
 
-.item-box {
+button:hover {
+  opacity: 0.85;
+}
+
+.btn-excluir {
+  background: #d32f2f;
+}
+
+.btn-editar {
+  background: #f57c00;
+}
+
+.btn-cancelar {
+  background: #777;
+}
+
+.medicao {
   background: white;
-  padding: 12px;
-  margin: 8px 0;
-  border-radius: 6px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  padding: 15px;
+  margin: 10px 0;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.08);
 }
 
-.comprado {
-  text-decoration: line-through;
-  opacity: 0.6;
+.pressao {
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.normal {
+  border-left: 6px solid #2e7d32;
+}
+
+.alerta {
+  border-left: 6px solid #f9a825;
+}
+
+.alta {
+  border-left: 6px solid #d32f2f;
+}
+
+.baixa {
+  border-left: 6px solid #1565c0;
+}
+
+.classificacao {
+  font-weight: bold;
+  margin-top: 5px;
 }
 
 .total {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: bold;
-  text-align: right;
-  margin-top: 20px;
+  text-align: center;
+  margin: 20px 0;
 }
 
-.valor-input {
-  width: 80px;
-}
-
-.history-box {
-  background: #fff;
-  padding: 10px;
+.media {
+  background: #e3f2fd;
+  padding: 15px;
+  border-radius: 8px;
   margin-top: 15px;
-  border-radius: 6px;
-  display: none;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
+
+#lista {
+  margin-top: 10px;
+}
+
+.observacao {
+  color: #666;
+  font-style: italic;
+}
+
+.vazio {
+  text-align: center;
+  color: #777;
+  padding: 20px;
+}
+
 </style>
 </head>
 
 <body>
 
-<h2>🛒 Lista Mercado Inteligente</h2>
+<h2>❤️ Controle de Pressão Arterial</h2>
 
-<textarea id="itemInput" placeholder="Digite vários itens (um por linha)"></textarea>
+<!-- FORMULÁRIO -->
 
-<input id="qtdInput" type="number" value="1">
-<input id="valorInput" type="number" step="0.01" placeholder="Valor padrão">
+<div class="card">
 
-<button onclick="adicionar()">Adicionar Itens</button>
+<h3 id="tituloFormulario">Nova medição</h3>
 
-<button onclick="toggleHistory()">📜 Ver/ocultar histórico</button>
+<label>Data</label>
+<input type="date" id="dataInput">
 
-<h3>Lista atual</h3>
-<div id="lista"></div>
+<label>Hora</label>
+<input type="time" id="horaInput">
 
-<div class="total" id="total">Total: R$ 0,00</div>
+<label>Pressão sistólica</label>
+<input
+  type="number"
+  id="sistolicaInput"
+  placeholder="Ex.: 120"
+  min="50"
+  max="250"
+>
 
-<h3>Histórico de compras</h3>
-<div id="history" class="history-box"></div>
+<label>Pressão diastólica</label>
+<input
+  type="number"
+  id="diastolicaInput"
+  placeholder="Ex.: 80"
+  min="30"
+  max="150"
+>
+
+<label>Frequência cardíaca (BPM)</label>
+<input
+  type="number"
+  id="bpmInput"
+  placeholder="Ex.: 70"
+  min="30"
+  max="220"
+>
+
+<label>Observação</label>
+
+<textarea
+  id="observacaoInput"
+  placeholder="Ex.: Em repouso, após caminhada, antes do medicamento..."
+></textarea>
+
+<button onclick="salvarMedicao()" id="btnSalvar">
+  💾 Salvar medição
+</button>
+
+<button
+  onclick="cancelarEdicao()"
+  class="btn-cancelar"
+  id="btnCancelar"
+  style="display:none;"
+>
+  Cancelar
+</button>
+
+</div>
+
+
+<!-- RESUMO -->
+
+<div class="card">
+
+<h3>📊 Resumo</h3>
+
+<div id="resumo">
+Carregando...
+</div>
+
+</div>
+
+
+<!-- LISTA -->
+
+<h3>📋 Histórico de medições</h3>
+
+<div id="lista">
+Carregando...
+</div>
+
+
+<!-- FIREBASE -->
 
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 
+
 <script>
+
+// =====================================================
+// CONFIGURAÇÃO FIREBASE
+// =====================================================
+
 const firebaseConfig = {
+
   apiKey: "AIzaSyCy7my7mba4Ii47drcrhJEXmcByRRzN90",
+
   authDomain: "lista-colaborativa-7790b.firebaseapp.com",
-  databaseURL: "https://lista-colaborativa-7790b-default-rtdb.firebaseio.com",
+
+  databaseURL:
+    "https://lista-colaborativa-7790b-default-rtdb.firebaseio.com",
+
   projectId: "lista-colaborativa-7790b",
-  storageBucket: "lista-colaborativa-7790b.firebasestorage.app",
+
+  storageBucket:
+    "lista-colaborativa-7790b.firebasestorage.app",
+
   messagingSenderId: "830696828500",
-  appId: "1:830696828500:web:2971388ec7ed99c10f87c1"
+
+  appId:
+    "1:830696828500:web:2971388ec7ed99c10f87c1"
+
 };
 
+
+// Inicializa Firebase
+
 firebase.initializeApp(firebaseConfig);
-const ref = firebase.database().ref("itens");
-const historyRef = firebase.database().ref("historico");
 
-// ---------------- ADICIONAR ----------------
-function adicionar() {
-  const texto = document.getElementById("itemInput").value.trim();
-  const qtdPadrao = parseFloat(document.getElementById("qtdInput").value) || 1;
-  const valorPadrao = parseFloat(document.getElementById("valorInput").value) || 0;
 
-  if (!texto) return;
+// Banco de dados
 
-  texto.split("\n").forEach(linha => {
-    const item = linha.trim();
-    if (item) {
-      ref.push({
-        texto: item,
-        quantidade: qtdPadrao,
-        valor: valorPadrao,
-        comprado: false
+const ref =
+  firebase.database().ref("pressao");
+
+
+// ID utilizado quando estiver editando
+
+let idEdicao = null;
+
+
+// =====================================================
+// DATA E HORA ATUAL
+// =====================================================
+
+function preencherDataHora() {
+
+  const agora = new Date();
+
+  const ano = agora.getFullYear();
+
+  const mes =
+    String(agora.getMonth() + 1).padStart(2, "0");
+
+  const dia =
+    String(agora.getDate()).padStart(2, "0");
+
+  const hora =
+    String(agora.getHours()).padStart(2, "0");
+
+  const minuto =
+    String(agora.getMinutes()).padStart(2, "0");
+
+
+  document.getElementById("dataInput").value =
+    `${ano}-${mes}-${dia}`;
+
+  document.getElementById("horaInput").value =
+    `${hora}:${minuto}`;
+}
+
+
+preencherDataHora();
+
+
+// =====================================================
+// CLASSIFICAÇÃO
+// =====================================================
+
+function classificarPressao(sistolica, diastolica) {
+
+  if (sistolica < 90 || diastolica < 60) {
+
+    return {
+      texto: "Pressão baixa",
+      classe: "baixa"
+    };
+
+  }
+
+
+  if (sistolica >= 140 || diastolica >= 90) {
+
+    return {
+      texto: "Pressão alta",
+      classe: "alta"
+    };
+
+  }
+
+
+  if (
+    sistolica >= 130 ||
+    diastolica >= 85
+  ) {
+
+    return {
+      texto: "Atenção",
+      classe: "alerta"
+    };
+
+  }
+
+
+  return {
+    texto: "Dentro da faixa esperada",
+    classe: "normal"
+  };
+
+}
+
+
+// =====================================================
+// SALVAR MEDIÇÃO
+// =====================================================
+
+function salvarMedicao() {
+
+  const data =
+    document.getElementById("dataInput").value;
+
+  const hora =
+    document.getElementById("horaInput").value;
+
+  const sistolica =
+    parseInt(
+      document.getElementById("sistolicaInput").value
+    );
+
+  const diastolica =
+    parseInt(
+      document.getElementById("diastolicaInput").value
+    );
+
+  const bpm =
+    parseInt(
+      document.getElementById("bpmInput").value
+    ) || 0;
+
+  const observacao =
+    document.getElementById("observacaoInput").value.trim();
+
+
+  // Validação
+
+  if (!data) {
+
+    alert("Informe a data.");
+
+    return;
+
+  }
+
+
+  if (!hora) {
+
+    alert("Informe o horário.");
+
+    return;
+
+  }
+
+
+  if (!sistolica || !diastolica) {
+
+    alert("Informe a pressão sistólica e diastólica.");
+
+    return;
+
+  }
+
+
+  if (
+    sistolica < 50 ||
+    sistolica > 250 ||
+    diastolica < 30 ||
+    diastolica > 150
+  ) {
+
+    alert("Verifique os valores da pressão.");
+
+    return;
+
+  }
+
+
+  const classificacao =
+    classificarPressao(
+      sistolica,
+      diastolica
+    );
+
+
+  const medicao = {
+
+    data: data,
+
+    hora: hora,
+
+    sistolica: sistolica,
+
+    diastolica: diastolica,
+
+    bpm: bpm,
+
+    observacao: observacao,
+
+    classificacao: classificacao.texto,
+
+    criadoEm: new Date().toISOString()
+
+  };
+
+
+  // ===================================================
+  // EDITAR
+  // ===================================================
+
+  if (idEdicao) {
+
+    ref
+      .child(idEdicao)
+      .update(medicao)
+      .then(() => {
+
+        alert("Medição alterada com sucesso.");
+
+        cancelarEdicao();
+
       });
-    }
+
+    return;
+
+  }
+
+
+  // ===================================================
+  // NOVA MEDIÇÃO
+  // ===================================================
+
+  ref
+    .push(medicao)
+    .then(() => {
+
+      alert("Medição salva com sucesso.");
+
+      limparFormulario();
+
+    });
+
+}
+
+
+// =====================================================
+// LIMPAR FORMULÁRIO
+// =====================================================
+
+function limparFormulario() {
+
+  document.getElementById("sistolicaInput").value = "";
+
+  document.getElementById("diastolicaInput").value = "";
+
+  document.getElementById("bpmInput").value = "";
+
+  document.getElementById("observacaoInput").value = "";
+
+  preencherDataHora();
+
+}
+
+
+// =====================================================
+// EDITAR MEDIÇÃO
+// =====================================================
+
+function editarMedicao(id, item) {
+
+  idEdicao = id;
+
+
+  document.getElementById("tituloFormulario").innerText =
+    "✏️ Editar medição";
+
+
+  document.getElementById("dataInput").value =
+    item.data || "";
+
+
+  document.getElementById("horaInput").value =
+    item.hora || "";
+
+
+  document.getElementById("sistolicaInput").value =
+    item.sistolica || "";
+
+
+  document.getElementById("diastolicaInput").value =
+    item.diastolica || "";
+
+
+  document.getElementById("bpmInput").value =
+    item.bpm || "";
+
+
+  document.getElementById("observacaoInput").value =
+    item.observacao || "";
+
+
+  document.getElementById("btnSalvar").innerText =
+    "💾 Salvar alteração";
+
+
+  document.getElementById("btnCancelar").style.display =
+    "inline-block";
+
+
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth"
   });
 
-  document.getElementById("itemInput").value = "";
 }
 
-// ---------------- COMPRAR + HISTÓRICO ----------------
-function alternar(id, item) {
-  const novoStatus = !item.comprado;
 
-  ref.child(id).update({ comprado: novoStatus });
+// =====================================================
+// CANCELAR EDIÇÃO
+// =====================================================
 
-  if (novoStatus) {
-    historyRef.push({
-      texto: item.texto,
-      quantidade: item.quantidade,
-      valor: item.valor,
-      data: new Date().toLocaleString()
-    });
+function cancelarEdicao() {
+
+  idEdicao = null;
+
+
+  document.getElementById("tituloFormulario").innerText =
+    "Nova medição";
+
+
+  document.getElementById("btnSalvar").innerText =
+    "💾 Salvar medição";
+
+
+  document.getElementById("btnCancelar").style.display =
+    "none";
+
+
+  limparFormulario();
+
+}
+
+
+// =====================================================
+// EXCLUIR
+// =====================================================
+
+function excluirMedicao(id) {
+
+  if (
+    !confirm(
+      "Tem certeza que deseja excluir esta medição?"
+    )
+  ) {
+
+    return;
+
   }
+
+
+  ref
+    .child(id)
+    .remove();
+
 }
 
-// ---------------- REMOVER ----------------
-function remover(id) {
-  ref.child(id).remove();
-}
 
-// ---------------- ALTERAR QTD ----------------
-function mudarQtd(id, atual, delta) {
-  let nova = parseFloat(atual) + delta;
-  if (nova < 1) nova = 1;
-  ref.child(id).update({ quantidade: nova });
-}
+// =====================================================
+// RENDERIZAR LISTA
+// =====================================================
 
-// ---------------- ALTERAR VALOR ----------------
-function mudarValor(id, valor) {
-  const num = parseFloat(valor);
-  if (!isNaN(num)) {
-    ref.child(id).update({ valor: num });
-  }
-}
-
-// ---------------- RENDER LISTA ----------------
 ref.on("value", snap => {
+
   const data = snap.val() || {};
-  const lista = document.getElementById("lista");
+
+  const lista =
+    document.getElementById("lista");
+
+
   lista.innerHTML = "";
 
-  let total = 0;
 
-  Object.entries(data).forEach(([id, item]) => {
+  const registros =
+    Object.entries(data);
 
-    const qtd = parseFloat(item.quantidade) || 1;
-    const valor = parseFloat(item.valor) || 0;
-    const subtotal = qtd * valor;
 
-    total += subtotal;
+  // Ordenar por data e hora
 
-    const div = document.createElement("div");
-    div.className = "item-box";
+  registros.sort((a, b) => {
 
-    if (item.comprado) div.classList.add("comprado");
+    const dataA =
+      `${a[1].data} ${a[1].hora}`;
+
+    const dataB =
+      `${b[1].data} ${b[1].hora}`;
+
+    return dataB.localeCompare(dataA);
+
+  });
+
+
+  if (registros.length === 0) {
+
+    lista.innerHTML =
+      '<div class="vazio">Nenhuma medição registrada.</div>';
+
+    atualizarResumo([]);
+
+    return;
+
+  }
+
+
+  registros.forEach(([id, item]) => {
+
+    const sistolica =
+      parseInt(item.sistolica) || 0;
+
+    const diastolica =
+      parseInt(item.diastolica) || 0;
+
+    const bpm =
+      parseInt(item.bpm) || 0;
+
+
+    const classificacao =
+      classificarPressao(
+        sistolica,
+        diastolica
+      );
+
+
+    const div =
+      document.createElement("div");
+
+
+    div.className =
+      "medicao " + classificacao.classe;
+
 
     div.innerHTML = `
-      <strong>${item.texto}</strong><br>
 
-      Qtd: ${qtd}
-      <button onclick="mudarQtd('${id}', ${qtd}, -1)">-</button>
-      <button onclick="mudarQtd('${id}', ${qtd}, 1)">+</button>
+      <div>
+
+        📅 <strong>${formatarData(item.data)}</strong>
+
+        às <strong>${item.hora || "--:--"}</strong>
+
+      </div>
+
+      <br>
+
+      <div class="pressao">
+
+        ❤️ ${sistolica}/${diastolica} mmHg
+
+      </div>
+
+      <div>
+
+        💓 Frequência cardíaca:
+        ${bpm > 0 ? bpm + " BPM" : "Não informado"}
+
+      </div>
+
+      <div class="classificacao">
+
+        ${classificacao.texto}
+
+      </div>
+
+      ${
+        item.observacao
+        ?
+        `<p class="observacao">
+          📝 ${item.observacao}
+        </p>`
+        :
+        ""
+      }
 
       <br>
 
-      R$ <input class="valor-input" value="${valor}"
-      onchange="mudarValor('${id}', this.value)">
-
-      <br>
-      Subtotal: R$ ${subtotal.toFixed(2)}<br>
-
-      <button onclick="alternar('${id}', ${JSON.stringify(item).replace(/"/g, '&quot;')})">
-        ${item.comprado ? "Desmarcar" : "Comprar"}
+      <button
+        class="btn-editar"
+        onclick='editarMedicao(
+          "${id}",
+          ${JSON.stringify(item).replace(/'/g, "\\'")}
+        )'
+      >
+        ✏️ Editar
       </button>
 
-      <button onclick="remover('${id}')">Excluir</button>
+      <button
+        class="btn-excluir"
+        onclick="excluirMedicao('${id}')"
+      >
+        🗑️ Excluir
+      </button>
+
     `;
+
 
     lista.appendChild(div);
+
   });
 
-  document.getElementById("total").innerText =
-    "Total: R$ " + total.toFixed(2);
+
+  atualizarResumo(
+    registros.map(item => item[1])
+  );
+
 });
 
-// ---------------- HISTÓRICO ----------------
-historyRef.on("value", snap => {
-  const data = snap.val() || {};
-  const history = document.getElementById("history");
-  history.innerHTML = "";
 
-  Object.values(data).forEach(item => {
-    const div = document.createElement("div");
-    div.innerHTML = `
-      🛒 ${item.texto} - Qtd: ${item.quantidade} - R$ ${item.valor}
+// =====================================================
+// RESUMO
+// =====================================================
+
+function atualizarResumo(registros) {
+
+  const resumo =
+    document.getElementById("resumo");
+
+
+  if (!registros.length) {
+
+    resumo.innerHTML =
+      "Nenhuma medição disponível.";
+
+    return;
+
+  }
+
+
+  let totalSistolica = 0;
+
+  let totalDiastolica = 0;
+
+  let totalBpm = 0;
+
+  let quantidadeBpm = 0;
+
+  let altas = 0;
+
+  let baixas = 0;
+
+
+  registros.forEach(item => {
+
+    const sistolica =
+      parseInt(item.sistolica) || 0;
+
+    const diastolica =
+      parseInt(item.diastolica) || 0;
+
+    const bpm =
+      parseInt(item.bpm) || 0;
+
+
+    totalSistolica += sistolica;
+
+    totalDiastolica += diastolica;
+
+
+    if (bpm > 0) {
+
+      totalBpm += bpm;
+
+      quantidadeBpm++;
+
+    }
+
+
+    if (
+      sistolica >= 140 ||
+      diastolica >= 90
+    ) {
+
+      altas++;
+
+    }
+
+
+    if (
+      sistolica < 90 ||
+      diastolica < 60
+    ) {
+
+      baixas++;
+
+    }
+
+  });
+
+
+  const mediaSistolica =
+    (
+      totalSistolica /
+      registros.length
+    ).toFixed(1);
+
+
+  const mediaDiastolica =
+    (
+      totalDiastolica /
+      registros.length
+    ).toFixed(1);
+
+
+  const mediaBpm =
+    quantidadeBpm
+    ?
+    (
+      totalBpm /
+      quantidadeBpm
+    ).toFixed(1)
+    :
+    "Não informado";
+
+
+  resumo.innerHTML = `
+
+    <div class="media">
+
+      📊 <strong>Total de medições:</strong>
+      ${registros.length}
+
+      <br><br>
+
+      ❤️ <strong>Média da pressão:</strong>
+      ${mediaSistolica}/${mediaDiastolica} mmHg
+
+      <br><br>
+
+      💓 <strong>Média dos batimentos:</strong>
+      ${mediaBpm}
+      ${mediaBpm !== "Não informado" ? " BPM" : ""}
+
+      <br><br>
+
+      🔴 <strong>Medições altas:</strong>
+      ${altas}
+
       <br>
-      📅 ${item.data}
-      <hr>
-    `;
-    history.appendChild(div);
-  });
-});
 
-// ---------------- TOGGLE HISTORY ----------------
-function toggleHistory() {
-  const h = document.getElementById("history");
-  h.style.display = h.style.display === "none" ? "block" : "none";
+      🔵 <strong>Medições baixas:</strong>
+      ${baixas}
+
+    </div>
+
+  `;
+
 }
+
+
+// =====================================================
+// FORMATAR DATA
+// =====================================================
+
+function formatarData(data) {
+
+  if (!data) return "";
+
+  const partes =
+    data.split("-");
+
+
+  if (partes.length !== 3) {
+
+    return data;
+
+  }
+
+
+  return `${partes[2]}/${partes[1]}/${partes[0]}`;
+
+}
+
 </script>
 
 </body>
 </html>
+```
