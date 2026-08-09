@@ -1,17 +1,24 @@
 ```html
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
+
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta
+  name="viewport"
+  content="width=device-width, initial-scale=1.0"
+>
 
 <title>Controle de Pressão Arterial</title>
+
 
 <style>
 
 body {
   font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
-  max-width: 700px;
+  max-width: 750px;
   margin: auto;
   padding: 20px;
   background: #f5f5f5;
@@ -31,8 +38,7 @@ h2 {
 }
 
 input,
-textarea,
-select {
+textarea {
   width: 100%;
   padding: 10px;
   margin: 5px 0 12px;
@@ -42,7 +48,7 @@ select {
 }
 
 button {
-  padding: 9px 12px;
+  padding: 10px 13px;
   cursor: pointer;
   margin: 3px;
   border: none;
@@ -67,17 +73,20 @@ button:hover {
   background: #777;
 }
 
+.btn-pdf {
+  background: #8e24aa;
+  width: 100%;
+  font-size: 16px;
+  padding: 12px;
+  margin-top: 10px;
+}
+
 .medicao {
   background: white;
   padding: 15px;
   margin: 10px 0;
   border-radius: 8px;
   box-shadow: 0 2px 5px rgba(0,0,0,0.08);
-}
-
-.pressao {
-  font-size: 24px;
-  font-weight: bold;
 }
 
 .normal {
@@ -96,32 +105,26 @@ button:hover {
   border-left: 6px solid #1565c0;
 }
 
+.pressao {
+  font-size: 24px;
+  font-weight: bold;
+  margin: 8px 0;
+}
+
 .classificacao {
   font-weight: bold;
   margin-top: 5px;
 }
 
-.total {
-  font-size: 18px;
-  font-weight: bold;
-  text-align: center;
-  margin: 20px 0;
+.observacao {
+  color: #666;
+  font-style: italic;
 }
 
 .media {
   background: #e3f2fd;
   padding: 15px;
   border-radius: 8px;
-  margin-top: 15px;
-}
-
-#lista {
-  margin-top: 10px;
-}
-
-.observacao {
-  color: #666;
-  font-style: italic;
 }
 
 .vazio {
@@ -131,25 +134,45 @@ button:hover {
 }
 
 </style>
+
 </head>
+
 
 <body>
 
+
 <h2>❤️ Controle de Pressão Arterial</h2>
 
+
+<!-- ================================================= -->
 <!-- FORMULÁRIO -->
+<!-- ================================================= -->
 
 <div class="card">
 
-<h3 id="tituloFormulario">Nova medição</h3>
+<h3 id="tituloFormulario">
+  Nova medição
+</h3>
+
 
 <label>Data</label>
-<input type="date" id="dataInput">
+
+<input
+  type="date"
+  id="dataInput"
+>
+
 
 <label>Hora</label>
-<input type="time" id="horaInput">
+
+<input
+  type="time"
+  id="horaInput"
+>
+
 
 <label>Pressão sistólica</label>
+
 <input
   type="number"
   id="sistolicaInput"
@@ -158,7 +181,9 @@ button:hover {
   max="250"
 >
 
+
 <label>Pressão diastólica</label>
+
 <input
   type="number"
   id="diastolicaInput"
@@ -167,7 +192,9 @@ button:hover {
   max="150"
 >
 
+
 <label>Frequência cardíaca (BPM)</label>
+
 <input
   type="number"
   id="bpmInput"
@@ -176,6 +203,7 @@ button:hover {
   max="220"
 >
 
+
 <label>Observação</label>
 
 <textarea
@@ -183,9 +211,14 @@ button:hover {
   placeholder="Ex.: Em repouso, após caminhada, antes do medicamento..."
 ></textarea>
 
-<button onclick="salvarMedicao()" id="btnSalvar">
+
+<button
+  onclick="salvarMedicao()"
+  id="btnSalvar"
+>
   💾 Salvar medição
 </button>
+
 
 <button
   onclick="cancelarEdicao()"
@@ -199,56 +232,84 @@ button:hover {
 </div>
 
 
+<!-- ================================================= -->
 <!-- RESUMO -->
+<!-- ================================================= -->
 
 <div class="card">
 
 <h3>📊 Resumo</h3>
 
 <div id="resumo">
-Carregando...
+  Carregando...
 </div>
 
+
+<button
+  class="btn-pdf"
+  onclick="gerarPDF()"
+>
+  📄 Salvar resultados em PDF
+</button>
+
 </div>
 
 
-<!-- LISTA -->
+<!-- ================================================= -->
+<!-- HISTÓRICO -->
+<!-- ================================================= -->
 
 <h3>📋 Histórico de medições</h3>
 
 <div id="lista">
-Carregando...
+  Carregando...
 </div>
 
 
+<!-- ================================================= -->
 <!-- FIREBASE -->
+<!-- ================================================= -->
 
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 
 
+<!-- ================================================= -->
+<!-- jsPDF -->
+<!-- ================================================= -->
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+
+
 <script>
 
+
 // =====================================================
-// CONFIGURAÇÃO FIREBASE
+// FIREBASE
 // =====================================================
 
 const firebaseConfig = {
 
-  apiKey: "AIzaSyCy7my7mba4Ii47drcrhJEXmcByRRzN90",
+  apiKey:
+    "AIzaSyCy7my7mba4Ii47drcrhJEXmcByRRzN90",
 
-  authDomain: "lista-colaborativa-7790b.firebaseapp.com",
+  authDomain:
+    "lista-colaborativa-7790b.firebaseapp.com",
 
   databaseURL:
     "https://lista-colaborativa-7790b-default-rtdb.firebaseio.com",
 
-  projectId: "lista-colaborativa-7790b",
+  projectId:
+    "lista-colaborativa-7790b",
 
   storageBucket:
     "lista-colaborativa-7790b.firebasestorage.app",
 
-  messagingSenderId: "830696828500",
+  messagingSenderId:
+    "830696828500",
 
   appId:
     "1:830696828500:web:2971388ec7ed99c10f87c1"
@@ -256,43 +317,47 @@ const firebaseConfig = {
 };
 
 
-// Inicializa Firebase
-
 firebase.initializeApp(firebaseConfig);
 
-
-// Banco de dados
 
 const ref =
   firebase.database().ref("pressao");
 
 
-// ID utilizado quando estiver editando
-
 let idEdicao = null;
 
 
+// Guarda os registros atuais para o PDF
+
+let registrosAtuais = [];
+
+
 // =====================================================
-// DATA E HORA ATUAL
+// DATA E HORA
 // =====================================================
 
 function preencherDataHora() {
 
   const agora = new Date();
 
-  const ano = agora.getFullYear();
+  const ano =
+    agora.getFullYear();
 
   const mes =
-    String(agora.getMonth() + 1).padStart(2, "0");
+    String(agora.getMonth() + 1)
+    .padStart(2, "0");
 
   const dia =
-    String(agora.getDate()).padStart(2, "0");
+    String(agora.getDate())
+    .padStart(2, "0");
 
   const hora =
-    String(agora.getHours()).padStart(2, "0");
+    String(agora.getHours())
+    .padStart(2, "0");
 
   const minuto =
-    String(agora.getMinutes()).padStart(2, "0");
+    String(agora.getMinutes())
+    .padStart(2, "0");
 
 
   document.getElementById("dataInput").value =
@@ -300,6 +365,7 @@ function preencherDataHora() {
 
   document.getElementById("horaInput").value =
     `${hora}:${minuto}`;
+
 }
 
 
@@ -310,9 +376,15 @@ preencherDataHora();
 // CLASSIFICAÇÃO
 // =====================================================
 
-function classificarPressao(sistolica, diastolica) {
+function classificarPressao(
+  sistolica,
+  diastolica
+) {
 
-  if (sistolica < 90 || diastolica < 60) {
+  if (
+    sistolica < 90 ||
+    diastolica < 60
+  ) {
 
     return {
       texto: "Pressão baixa",
@@ -322,7 +394,10 @@ function classificarPressao(sistolica, diastolica) {
   }
 
 
-  if (sistolica >= 140 || diastolica >= 90) {
+  if (
+    sistolica >= 140 ||
+    diastolica >= 90
+  ) {
 
     return {
       texto: "Pressão alta",
@@ -354,7 +429,7 @@ function classificarPressao(sistolica, diastolica) {
 
 
 // =====================================================
-// SALVAR MEDIÇÃO
+// SALVAR
 // =====================================================
 
 function salvarMedicao() {
@@ -381,10 +456,11 @@ function salvarMedicao() {
     ) || 0;
 
   const observacao =
-    document.getElementById("observacaoInput").value.trim();
+    document
+      .getElementById("observacaoInput")
+      .value
+      .trim();
 
-
-  // Validação
 
   if (!data) {
 
@@ -406,7 +482,9 @@ function salvarMedicao() {
 
   if (!sistolica || !diastolica) {
 
-    alert("Informe a pressão sistólica e diastólica.");
+    alert(
+      "Informe a pressão sistólica e diastólica."
+    );
 
     return;
 
@@ -420,7 +498,9 @@ function salvarMedicao() {
     diastolica > 150
   ) {
 
-    alert("Verifique os valores da pressão.");
+    alert(
+      "Verifique os valores da pressão."
+    );
 
     return;
 
@@ -448,16 +528,16 @@ function salvarMedicao() {
 
     observacao: observacao,
 
-    classificacao: classificacao.texto,
+    classificacao:
+      classificacao.texto,
 
-    criadoEm: new Date().toISOString()
+    criadoEm:
+      new Date().toISOString()
 
   };
 
 
-  // ===================================================
   // EDITAR
-  // ===================================================
 
   if (idEdicao) {
 
@@ -466,7 +546,9 @@ function salvarMedicao() {
       .update(medicao)
       .then(() => {
 
-        alert("Medição alterada com sucesso.");
+        alert(
+          "Medição alterada com sucesso."
+        );
 
         cancelarEdicao();
 
@@ -477,15 +559,15 @@ function salvarMedicao() {
   }
 
 
-  // ===================================================
   // NOVA MEDIÇÃO
-  // ===================================================
 
   ref
     .push(medicao)
     .then(() => {
 
-      alert("Medição salva com sucesso.");
+      alert(
+        "Medição salva com sucesso."
+      );
 
       limparFormulario();
 
@@ -495,18 +577,27 @@ function salvarMedicao() {
 
 
 // =====================================================
-// LIMPAR FORMULÁRIO
+// LIMPAR
 // =====================================================
 
 function limparFormulario() {
 
-  document.getElementById("sistolicaInput").value = "";
+  document.getElementById(
+    "sistolicaInput"
+  ).value = "";
 
-  document.getElementById("diastolicaInput").value = "";
+  document.getElementById(
+    "diastolicaInput"
+  ).value = "";
 
-  document.getElementById("bpmInput").value = "";
+  document.getElementById(
+    "bpmInput"
+  ).value = "";
 
-  document.getElementById("observacaoInput").value = "";
+  document.getElementById(
+    "observacaoInput"
+  ).value = "";
+
 
   preencherDataHora();
 
@@ -514,47 +605,68 @@ function limparFormulario() {
 
 
 // =====================================================
-// EDITAR MEDIÇÃO
+// EDITAR
 // =====================================================
 
-function editarMedicao(id, item) {
+function editarMedicao(
+  id,
+  item
+) {
 
   idEdicao = id;
 
 
-  document.getElementById("tituloFormulario").innerText =
+  document.getElementById(
+    "tituloFormulario"
+  ).innerText =
     "✏️ Editar medição";
 
 
-  document.getElementById("dataInput").value =
+  document.getElementById(
+    "dataInput"
+  ).value =
     item.data || "";
 
 
-  document.getElementById("horaInput").value =
+  document.getElementById(
+    "horaInput"
+  ).value =
     item.hora || "";
 
 
-  document.getElementById("sistolicaInput").value =
+  document.getElementById(
+    "sistolicaInput"
+  ).value =
     item.sistolica || "";
 
 
-  document.getElementById("diastolicaInput").value =
+  document.getElementById(
+    "diastolicaInput"
+  ).value =
     item.diastolica || "";
 
 
-  document.getElementById("bpmInput").value =
+  document.getElementById(
+    "bpmInput"
+  ).value =
     item.bpm || "";
 
 
-  document.getElementById("observacaoInput").value =
+  document.getElementById(
+    "observacaoInput"
+  ).value =
     item.observacao || "";
 
 
-  document.getElementById("btnSalvar").innerText =
+  document.getElementById(
+    "btnSalvar"
+  ).innerText =
     "💾 Salvar alteração";
 
 
-  document.getElementById("btnCancelar").style.display =
+  document.getElementById(
+    "btnCancelar"
+  ).style.display =
     "inline-block";
 
 
@@ -575,15 +687,21 @@ function cancelarEdicao() {
   idEdicao = null;
 
 
-  document.getElementById("tituloFormulario").innerText =
+  document.getElementById(
+    "tituloFormulario"
+  ).innerText =
     "Nova medição";
 
 
-  document.getElementById("btnSalvar").innerText =
+  document.getElementById(
+    "btnSalvar"
+  ).innerText =
     "💾 Salvar medição";
 
 
-  document.getElementById("btnCancelar").style.display =
+  document.getElementById(
+    "btnCancelar"
+  ).style.display =
     "none";
 
 
@@ -617,12 +735,14 @@ function excluirMedicao(id) {
 
 
 // =====================================================
-// RENDERIZAR LISTA
+// LISTA DO FIREBASE
 // =====================================================
 
 ref.on("value", snap => {
 
-  const data = snap.val() || {};
+  const data =
+    snap.val() || {};
+
 
   const lista =
     document.getElementById("lista");
@@ -635,22 +755,32 @@ ref.on("value", snap => {
     Object.entries(data);
 
 
-  // Ordenar por data e hora
+  registros.sort(
+    (a, b) => {
 
-  registros.sort((a, b) => {
+      const dataA =
+        `${a[1].data} ${a[1].hora}`;
 
-    const dataA =
-      `${a[1].data} ${a[1].hora}`;
+      const dataB =
+        `${b[1].data} ${b[1].hora}`;
 
-    const dataB =
-      `${b[1].data} ${b[1].hora}`;
+      return dataB.localeCompare(dataA);
 
-    return dataB.localeCompare(dataA);
-
-  });
+    }
+  );
 
 
-  if (registros.length === 0) {
+  // Guarda para geração do PDF
+
+  registrosAtuais =
+    registros.map(
+      item => item[1]
+    );
+
+
+  if (
+    registros.length === 0
+  ) {
 
     lista.innerHTML =
       '<div class="vazio">Nenhuma medição registrada.</div>';
@@ -662,103 +792,114 @@ ref.on("value", snap => {
   }
 
 
-  registros.forEach(([id, item]) => {
+  registros.forEach(
+    ([id, item]) => {
 
-    const sistolica =
-      parseInt(item.sistolica) || 0;
+      const sistolica =
+        parseInt(item.sistolica) || 0;
 
-    const diastolica =
-      parseInt(item.diastolica) || 0;
+      const diastolica =
+        parseInt(item.diastolica) || 0;
 
-    const bpm =
-      parseInt(item.bpm) || 0;
-
-
-    const classificacao =
-      classificarPressao(
-        sistolica,
-        diastolica
-      );
+      const bpm =
+        parseInt(item.bpm) || 0;
 
 
-    const div =
-      document.createElement("div");
+      const classificacao =
+        classificarPressao(
+          sistolica,
+          diastolica
+        );
 
 
-    div.className =
-      "medicao " + classificacao.classe;
+      const div =
+        document.createElement(
+          "div"
+        );
 
 
-    div.innerHTML = `
-
-      <div>
-
-        📅 <strong>${formatarData(item.data)}</strong>
-
-        às <strong>${item.hora || "--:--"}</strong>
-
-      </div>
-
-      <br>
-
-      <div class="pressao">
-
-        ❤️ ${sistolica}/${diastolica} mmHg
-
-      </div>
-
-      <div>
-
-        💓 Frequência cardíaca:
-        ${bpm > 0 ? bpm + " BPM" : "Não informado"}
-
-      </div>
-
-      <div class="classificacao">
-
-        ${classificacao.texto}
-
-      </div>
-
-      ${
-        item.observacao
-        ?
-        `<p class="observacao">
-          📝 ${item.observacao}
-        </p>`
-        :
-        ""
-      }
-
-      <br>
-
-      <button
-        class="btn-editar"
-        onclick='editarMedicao(
-          "${id}",
-          ${JSON.stringify(item).replace(/'/g, "\\'")}
-        )'
-      >
-        ✏️ Editar
-      </button>
-
-      <button
-        class="btn-excluir"
-        onclick="excluirMedicao('${id}')"
-      >
-        🗑️ Excluir
-      </button>
-
-    `;
+      div.className =
+        "medicao " +
+        classificacao.classe;
 
 
-    lista.appendChild(div);
+      div.innerHTML = `
 
-  });
+        <div>
+
+          📅 <strong>
+            ${formatarData(item.data)}
+          </strong>
+
+          às <strong>
+            ${item.hora || "--:--"}
+          </strong>
+
+        </div>
+
+        <div class="pressao">
+
+          ❤️ ${sistolica}/${diastolica} mmHg
+
+        </div>
+
+        <div>
+
+          💓 Frequência cardíaca:
+
+          ${
+            bpm > 0
+            ? bpm + " BPM"
+            : "Não informado"
+          }
+
+        </div>
+
+        <div class="classificacao">
+
+          ${classificacao.texto}
+
+        </div>
+
+        ${
+          item.observacao
+          ?
+          `<p class="observacao">
+            📝 ${escapeHTML(item.observacao)}
+          </p>`
+          :
+          ""
+        }
+
+        <br>
+
+        <button
+          class="btn-editar"
+          onclick="editarMedicao('${id}', ${JSON.stringify(item).replace(/'/g, "\\'")})"
+        >
+          ✏️ Editar
+        </button>
+
+        <button
+          class="btn-excluir"
+          onclick="excluirMedicao('${id}')"
+        >
+          🗑️ Excluir
+        </button>
+
+      `;
+
+
+      lista.appendChild(div);
+
+    }
+  );
 
 
   atualizarResumo(
-    registros.map(item => item[1])
+    registros.map(
+      item => item[1]
+    )
   );
 
 });
@@ -768,13 +909,19 @@ ref.on("value", snap => {
 // RESUMO
 // =====================================================
 
-function atualizarResumo(registros) {
+function atualizarResumo(
+  registros
+) {
 
   const resumo =
-    document.getElementById("resumo");
+    document.getElementById(
+      "resumo"
+    );
 
 
-  if (!registros.length) {
+  if (
+    !registros.length
+  ) {
 
     resumo.innerHTML =
       "Nenhuma medição disponível.";
@@ -797,52 +944,62 @@ function atualizarResumo(registros) {
   let baixas = 0;
 
 
-  registros.forEach(item => {
+  registros.forEach(
+    item => {
 
-    const sistolica =
-      parseInt(item.sistolica) || 0;
+      const sistolica =
+        parseInt(
+          item.sistolica
+        ) || 0;
 
-    const diastolica =
-      parseInt(item.diastolica) || 0;
+      const diastolica =
+        parseInt(
+          item.diastolica
+        ) || 0;
 
-    const bpm =
-      parseInt(item.bpm) || 0;
+      const bpm =
+        parseInt(
+          item.bpm
+        ) || 0;
 
 
-    totalSistolica += sistolica;
+      totalSistolica +=
+        sistolica;
 
-    totalDiastolica += diastolica;
+      totalDiastolica +=
+        diastolica;
 
 
-    if (bpm > 0) {
+      if (bpm > 0) {
 
-      totalBpm += bpm;
+        totalBpm += bpm;
 
-      quantidadeBpm++;
+        quantidadeBpm++;
+
+      }
+
+
+      if (
+        sistolica >= 140 ||
+        diastolica >= 90
+      ) {
+
+        altas++;
+
+      }
+
+
+      if (
+        sistolica < 90 ||
+        diastolica < 60
+      ) {
+
+        baixas++;
+
+      }
 
     }
-
-
-    if (
-      sistolica >= 140 ||
-      diastolica >= 90
-    ) {
-
-      altas++;
-
-    }
-
-
-    if (
-      sistolica < 90 ||
-      diastolica < 60
-    ) {
-
-      baixas++;
-
-    }
-
-  });
+  );
 
 
   const mediaSistolica =
@@ -874,28 +1031,49 @@ function atualizarResumo(registros) {
 
     <div class="media">
 
-      📊 <strong>Total de medições:</strong>
+      📊 <strong>
+        Total de medições:
+      </strong>
+
       ${registros.length}
 
       <br><br>
 
-      ❤️ <strong>Média da pressão:</strong>
-      ${mediaSistolica}/${mediaDiastolica} mmHg
+      ❤️ <strong>
+        Média da pressão:
+      </strong>
+
+      ${mediaSistolica}/${mediaDiastolica}
+      mmHg
 
       <br><br>
 
-      💓 <strong>Média dos batimentos:</strong>
+      💓 <strong>
+        Média dos batimentos:
+      </strong>
+
       ${mediaBpm}
-      ${mediaBpm !== "Não informado" ? " BPM" : ""}
+
+      ${
+        mediaBpm !== "Não informado"
+        ? " BPM"
+        : ""
+      }
 
       <br><br>
 
-      🔴 <strong>Medições altas:</strong>
+      🔴 <strong>
+        Medições altas:
+      </strong>
+
       ${altas}
 
       <br>
 
-      🔵 <strong>Medições baixas:</strong>
+      🔵 <strong>
+        Medições baixas:
+      </strong>
+
       ${baixas}
 
     </div>
@@ -906,30 +1084,500 @@ function atualizarResumo(registros) {
 
 
 // =====================================================
+// GERAR PDF
+// =====================================================
+
+function gerarPDF() {
+
+  if (
+    !registrosAtuais.length
+  ) {
+
+    alert(
+      "Não existem medições para gerar o PDF."
+    );
+
+    return;
+
+  }
+
+
+  const {
+    jsPDF
+  } = window.jspdf;
+
+
+  const doc =
+    new jsPDF(
+      "p",
+      "mm",
+      "a4"
+    );
+
+
+  // ---------------------------------------------------
+  // TÍTULO
+  // ---------------------------------------------------
+
+  doc.setFontSize(18);
+
+  doc.setFont(
+    "helvetica",
+    "bold"
+  );
+
+
+  doc.text(
+    "Controle de Pressão Arterial",
+    14,
+    18
+  );
+
+
+  doc.setFontSize(10);
+
+  doc.setFont(
+    "helvetica",
+    "normal"
+  );
+
+
+  const agora =
+    new Date();
+
+
+  doc.text(
+    "Relatório gerado em: " +
+    agora.toLocaleString("pt-BR"),
+    14,
+    25
+  );
+
+
+  // ---------------------------------------------------
+  // CÁLCULOS
+  // ---------------------------------------------------
+
+  let totalSistolica = 0;
+
+  let totalDiastolica = 0;
+
+  let totalBpm = 0;
+
+  let quantidadeBpm = 0;
+
+  let altas = 0;
+
+  let baixas = 0;
+
+
+  registrosAtuais.forEach(
+    item => {
+
+      const sistolica =
+        parseInt(
+          item.sistolica
+        ) || 0;
+
+      const diastolica =
+        parseInt(
+          item.diastolica
+        ) || 0;
+
+      const bpm =
+        parseInt(
+          item.bpm
+        ) || 0;
+
+
+      totalSistolica +=
+        sistolica;
+
+      totalDiastolica +=
+        diastolica;
+
+
+      if (
+        bpm > 0
+      ) {
+
+        totalBpm += bpm;
+
+        quantidadeBpm++;
+
+      }
+
+
+      if (
+        sistolica >= 140 ||
+        diastolica >= 90
+      ) {
+
+        altas++;
+
+      }
+
+
+      if (
+        sistolica < 90 ||
+        diastolica < 60
+      ) {
+
+        baixas++;
+
+      }
+
+    }
+  );
+
+
+  const mediaSistolica =
+    (
+      totalSistolica /
+      registrosAtuais.length
+    ).toFixed(1);
+
+
+  const mediaDiastolica =
+    (
+      totalDiastolica /
+      registrosAtuais.length
+    ).toFixed(1);
+
+
+  const mediaBpm =
+    quantidadeBpm
+    ?
+    (
+      totalBpm /
+      quantidadeBpm
+    ).toFixed(1)
+    :
+    "-";
+
+
+  // ---------------------------------------------------
+  // RESUMO NO PDF
+  // ---------------------------------------------------
+
+  doc.setFontSize(12);
+
+  doc.setFont(
+    "helvetica",
+    "bold"
+  );
+
+
+  doc.text(
+    "Resumo",
+    14,
+    37
+  );
+
+
+  doc.setFontSize(10);
+
+  doc.setFont(
+    "helvetica",
+    "normal"
+  );
+
+
+  doc.text(
+    "Total de medições: " +
+    registrosAtuais.length,
+    14,
+    44
+  );
+
+
+  doc.text(
+    "Média da pressão: " +
+    mediaSistolica +
+    "/" +
+    mediaDiastolica +
+    " mmHg",
+    14,
+    50
+  );
+
+
+  doc.text(
+    "Média dos batimentos: " +
+    mediaBpm +
+    " BPM",
+    14,
+    56
+  );
+
+
+  doc.text(
+    "Medições classificadas como altas: " +
+    altas,
+    14,
+    62
+  );
+
+
+  doc.text(
+    "Medições classificadas como baixas: " +
+    baixas,
+    14,
+    68
+  );
+
+
+  // ---------------------------------------------------
+  // TABELA
+  // ---------------------------------------------------
+
+  const tabela =
+    registrosAtuais.map(
+      item => {
+
+        const classificacao =
+          classificarPressao(
+            parseInt(
+              item.sistolica
+            ) || 0,
+            parseInt(
+              item.diastolica
+            ) || 0
+          );
+
+
+        return [
+
+          formatarData(
+            item.data
+          ),
+
+          item.hora ||
+          "--:--",
+
+          (
+            item.sistolica ||
+            "-"
+          ) +
+          "/" +
+          (
+            item.diastolica ||
+            "-"
+          ),
+
+          item.bpm
+            ? item.bpm
+            : "-",
+
+          classificacao.texto,
+
+          item.observacao
+            ? item.observacao
+            : "-"
+
+        ];
+
+      }
+    );
+
+
+  doc.autoTable({
+
+    startY: 75,
+
+    head: [[
+
+      "Data",
+      "Hora",
+      "Pressão",
+      "BPM",
+      "Classificação",
+      "Observação"
+
+    ]],
+
+    body: tabela,
+
+    theme: "grid",
+
+    styles: {
+
+      fontSize: 8,
+
+      cellPadding: 2,
+
+      overflow: "linebreak"
+
+    },
+
+    headStyles: {
+
+      fontStyle: "bold"
+
+    },
+
+    columnStyles: {
+
+      0: {
+        cellWidth: 22
+      },
+
+      1: {
+        cellWidth: 15
+      },
+
+      2: {
+        cellWidth: 23
+      },
+
+      3: {
+        cellWidth: 15
+      },
+
+      4: {
+        cellWidth: 35
+      },
+
+      5: {
+        cellWidth: 70
+      }
+
+    }
+
+  });
+
+
+  // ---------------------------------------------------
+  // RODAPÉ
+  // ---------------------------------------------------
+
+  const paginas =
+    doc.internal.getNumberOfPages();
+
+
+  for (
+    let i = 1;
+    i <= paginas;
+    i++
+  ) {
+
+    doc.setPage(i);
+
+    const altura =
+      doc.internal.pageSize.height;
+
+
+    doc.setFontSize(8);
+
+    doc.setFont(
+      "helvetica",
+      "normal"
+    );
+
+
+    doc.text(
+      "Controle de Pressão Arterial - Página " +
+      i +
+      " de " +
+      paginas,
+      14,
+      altura - 10
+    );
+
+  }
+
+
+  // ---------------------------------------------------
+  // SALVAR
+  // ---------------------------------------------------
+
+  const dataArquivo =
+    agora
+      .toISOString()
+      .slice(0, 10);
+
+
+  doc.save(
+    "controle-pressao-" +
+    dataArquivo +
+    ".pdf"
+  );
+
+}
+
+
+// =====================================================
 // FORMATAR DATA
 // =====================================================
 
-function formatarData(data) {
+function formatarData(
+  data
+) {
 
-  if (!data) return "";
+  if (!data) {
+    return "";
+  }
+
 
   const partes =
     data.split("-");
 
 
-  if (partes.length !== 3) {
+  if (
+    partes.length !== 3
+  ) {
 
     return data;
 
   }
 
 
-  return `${partes[2]}/${partes[1]}/${partes[0]}`;
+  return (
+    partes[2] +
+    "/" +
+    partes[1] +
+    "/" +
+    partes[0]
+  );
+
+}
+
+
+// =====================================================
+// SEGURANÇA PARA OBSERVAÇÕES
+// =====================================================
+
+function escapeHTML(
+  texto
+) {
+
+  return texto
+    .replace(
+      /&/g,
+      "&amp;"
+    )
+    .replace(
+      /</g,
+      "&lt;"
+    )
+    .replace(
+      />/g,
+      "&gt;"
+    )
+    .replace(
+      /"/g,
+      "&quot;"
+    )
+    .replace(
+      /'/g,
+      "&#039;"
+    );
 
 }
 
 </script>
 
 </body>
+
 </html>
 ```
